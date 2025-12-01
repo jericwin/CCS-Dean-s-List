@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard</title>
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='logo.png') }}"
+      type="image/png"
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+      :root {
+        --primary: #ff7a1a;
+        --primary-hover: #e06b17;
+        --secondary: #7b1f1f;
+        --bg-dark: #121212;
+        --bg-card: #1e1e1e;
+        --text-main: #e0e0e0;
+        --text-muted: #a0a0a0;
+        --border-color: #333;
+        --sidebar-width: 260px;
+        --transition: all 0.3s ease;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-dark);
+        color: var(--text-main);
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: var(--sidebar-width);
+        background-color: var(--bg-card);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        padding: 2rem 1.5rem;
+        position: fixed;
+        height: 100vh;
+        z-index: 100;
+      }
+
+      .sidebar-header {
+        margin-bottom: 3rem;
+        text-align: center;
+      }
+
+      .sidebar-header h2 {
+        color: var(--primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.8rem 1rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: var(--transition);
+        font-weight: 500;
+      }
+
+      .nav-link:hover,
+      .nav-link.active {
+        background-color: rgba(255, 122, 26, 0.1);
+        color: var(--primary);
+      }
+
+      .nav-link i {
+        width: 20px;
+        text-align: center;
+      }
+
+      /* User Menu */
+      .user-menu {
+        margin-top: auto;
+        position: relative;
+      }
+
+      .user-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.8rem 1rem;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-main);
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .user-btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        bottom: 110%;
+        left: 0;
+        width: 100%;
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.5rem;
+        display: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .dropdown-menu.show {
+        display: block;
+        animation: slideUp 0.2s ease;
+      }
+
+      .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.8rem 1rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 6px;
+        transition: var(--transition);
+      }
+
+      .dropdown-item:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: var(--text-main);
+      }
+
+      .dropdown-item.danger {
+        color: #ff4d4d;
+      }
+
+      .dropdown-item.danger:hover {
+        background-color: rgba(255, 77, 77, 0.1);
+      }
+
+      /* Main Content */
+      .main-content {
+        margin-left: var(--sidebar-width);
+        flex: 1;
+        padding: 2rem;
+        max-width: 1600px;
+      }
+
+      .page-header {
+        margin-bottom: 2rem;
+      }
+
+      .page-header h1 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: var(--text-main);
+      }
+
+      .page-header span {
+        color: var(--primary);
+      }
+
+      /* Grid Layout */
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .col-span-3 {
+        grid-column: span 3;
+      }
+      .col-span-4 {
+        grid-column: span 4;
+      }
+      .col-span-6 {
+        grid-column: span 6;
+      }
+      .col-span-8 {
+        grid-column: span 8;
+      }
+      .col-span-9 {
+        grid-column: span 9;
+      }
+      .col-span-12 {
+        grid-column: span 12;
+      }
+
+      /* Stat Cards (KPIs) */
+      .stat-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: var(--transition);
+      }
+
+      .stat-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--primary);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .stat-info h3 {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+
+      .stat-info .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-main);
+      }
+
+      .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+
+      .stat-icon.orange {
+        background: rgba(255, 122, 26, 0.1);
+        color: var(--primary);
+      }
+      .stat-icon.blue {
+        background: rgba(33, 150, 243, 0.1);
+        color: #2196f3;
+      }
+      .stat-icon.green {
+        background: rgba(76, 175, 80, 0.1);
+        color: #4caf50;
+      }
+      .stat-icon.red {
+        background: rgba(244, 67, 54, 0.1);
+        color: #f44336;
+      }
+
+      /* Cards */
+      .card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+      }
+
+      .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-main);
+      }
+
+      /* Lists */
+      .recent-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+
+      .recent-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+        transition: var(--transition);
+      }
+
+      .recent-item:last-child {
+        border-bottom: none;
+      }
+
+      .recent-item:hover {
+        padding-left: 0.5rem;
+      }
+
+      .item-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.4rem;
+        font-size: 0.9rem;
+      }
+
+      .item-title {
+        font-weight: 600;
+        color: var(--text-main);
+      }
+
+      .item-date {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+      }
+
+      .item-body {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .badge {
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .badge-anonymous {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-muted);
+      }
+
+      /* Buttons */
+      .btn-sm {
+        padding: 0.4rem 0.8rem;
+        background-color: rgba(255, 122, 26, 0.1);
+        color: var(--primary);
+        border: 1px solid transparent;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .btn-sm:hover {
+        background-color: var(--primary);
+        color: white;
+      }
+
+      /* Chart Container */
+      .chart-container {
+        position: relative;
+        height: 250px;
+        width: 100%;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 1200px) {
+        .col-span-3,
+        .col-span-4,
+        .col-span-6,
+        .col-span-8,
+        .col-span-9 {
+          grid-column: span 12;
+        }
+        .stat-card {
+          margin-bottom: 1rem;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+        .sidebar.active {
+          transform: translateX(0);
+        }
+        .main-content {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>ADMIN PANEL</h2>
+      </div>
+      <div class="nav-links">
+        <a href="{{ url_for('admin_dashboard') }}" class="nav-link active">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('admin_announcements') }}" class="nav-link">
+          <i class="fas fa-bullhorn"></i>
+          <span>Announcements</span>
+        </a>
+        <a
+          href="{{ url_for('admin_deans_list_applications') }}"
+          class="nav-link"
+        >
+          <i class="fas fa-award"></i>
+          <span>Dean's List</span>
+        </a>
+        <a href="{{ url_for('admin_chat') }}" class="nav-link">
+          <i class="fas fa-comments"></i>
+          <span>Chat Support</span>
+        </a>
+        <a href="{{ url_for('admin_feedback') }}" class="nav-link">
+          <i class="fas fa-comment-dots"></i>
+          <span>Feedback</span>
+        </a>
+        <a href="{{ url_for('admin_ranking') }}" class="nav-link">
+          <i class="fas fa-trophy"></i>
+          <span>Ranking</span>
+        </a>
+      </div>
+      <div class="user-menu">
+        <div class="user-btn" onclick="toggleUserMenu()">
+          <div class="user-info">
+            <i class="fas fa-user-circle"></i>
+            <span>Admin</span>
+          </div>
+          <i class="fas fa-chevron-up"></i>
+        </div>
+        <div class="dropdown-menu" id="userDropdown">
+          <a href="{{ url_for('admin_settings') }}" class="dropdown-item">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+          </a>
+          <a href="{{ url_for('admin_logout') }}" class="dropdown-item danger">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function toggleUserMenu() {
+        const menu = document.getElementById("userDropdown");
+        menu.classList.toggle("show");
+      }
+
+      // Close dropdown when clicking outside
+      window.addEventListener("click", function (e) {
+        const userBtn = document.querySelector(".user-btn");
+        const menu = document.getElementById("userDropdown");
+
+        if (!userBtn.contains(e.target) && !menu.contains(e.target)) {
+          menu.classList.remove("show");
+        }
+      });
+    </script>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="page-header">
+        <h1>Welcome back, <span>{{ admin }}</span></h1>
+        <p style="color: var(--text-muted); margin-top: 0.5rem">
+          Here's what's happening in your portal today.
+        </p>
+      </div>
+
+      <!-- Stats Grid (Optional - using charts for now but structure is here) -->
+      <!-- 
+      <div class="dashboard-grid">
+        <div class="card col-span-3">...</div>
+      </div> 
+      -->
+
+      <div class="dashboard-grid">
+        <!-- Row 1: KPI Cards -->
+        <div class="stat-card col-span-3">
+          <div class="stat-info">
+            <h3>Total Students</h3>
+            <div class="value">{{ total_students }}</div>
+          </div>
+          <div class="stat-icon orange">
+            <i class="fas fa-user-graduate"></i>
+          </div>
+        </div>
+
+        <div class="stat-card col-span-3">
+          <div class="stat-info">
+            <h3>Announcements</h3>
+            <div class="value">{{ total_announcements }}</div>
+          </div>
+          <div class="stat-icon green">
+            <i class="fas fa-bullhorn"></i>
+          </div>
+        </div>
+
+        <div class="stat-card col-span-3">
+          <div class="stat-info">
+            <h3>Feedback</h3>
+            <div class="value">{{ total_feedback }}</div>
+          </div>
+          <div class="stat-icon blue">
+            <i class="fas fa-comment-dots"></i>
+          </div>
+        </div>
+
+        <div class="stat-card col-span-3">
+          <div class="stat-info">
+            <h3>Pending</h3>
+            <div class="value">{{ pending_applications }}</div>
+          </div>
+          <div class="stat-icon red">
+            <i class="fas fa-file-signature"></i>
+          </div>
+        </div>
+
+        <!-- Row 2: Main Charts -->
+        <div class="card col-span-8">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fas fa-chart-line"></i>
+              User Growth Analytics
+            </div>
+            <!-- No specific action for analytics usually, but could add export -->
+          </div>
+          <div class="chart-container" style="height: 350px">
+            <canvas id="usersChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card col-span-4">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fas fa-chart-pie"></i>
+              Dean's List Status
+            </div>
+            <a href="/admin/deans_list_applications" class="btn-sm">
+              Review <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+          <div class="chart-container" style="height: 350px">
+            <canvas id="deanChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Row 3: Secondary Charts & Activity -->
+        <div class="card col-span-4">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fas fa-bullhorn"></i>
+              Announcements
+            </div>
+            <a href="{{ url_for('admin_announcements') }}" class="btn-sm">
+              Manage <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+          <div class="chart-container">
+            <canvas id="announcementsChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card col-span-4">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fas fa-comment-dots"></i>
+              Feedback Trends
+            </div>
+            <a href="{{ url_for('admin_feedback') }}" class="btn-sm">
+              View All <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+          <div class="chart-container">
+            <canvas id="feedbackChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card col-span-4">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fas fa-clock"></i>
+              Recent Activity
+            </div>
+          </div>
+          <ul class="recent-list">
+            {% for announcement in recent_announcements[:3] %}
+            <li class="recent-item">
+              <div class="item-header">
+                <span class="item-title">{{ announcement.title }}</span>
+                <span class="item-date"
+                  >{{ announcement.created_at.strftime('%b %d') }}</span
+                >
+              </div>
+              <div class="item-body">{{ announcement.body }}</div>
+            </li>
+            {% endfor %} {% for feedback in recent_feedback[:2] %}
+            <li class="recent-item">
+              <div class="item-header">
+                <span class="item-title">
+                  {% if feedback.anonymous %} Anonymous {% else %} {{
+                  feedback.fullname }} {% endif %}
+                </span>
+                <span class="item-date"
+                  >{{ feedback.created_at.strftime('%b %d') }}</span
+                >
+              </div>
+              <div class="item-body">{{ feedback.feedback }}</div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Dean Applications Doughnut Chart
+      new Chart(document.getElementById('deanChart'), {
+          type: 'doughnut',
+          data: {
+              labels: {{ dean_statuses|tojson }},
+              datasets: [{
+                  label: 'Dean Applications Status',
+                  data: {{ dean_counts|tojson }},
+                  backgroundColor: ['#4CAF50', '#FFEB3B', '#F44336'],
+                  borderWidth: 1
+              }]
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  legend: { position: 'bottom', labels: { font: { size: 14 } } }
+              }
+          }
+      });
+
+      // Users Monthly Chart
+      new Chart(document.getElementById('usersChart'), {
+          type: 'bar',
+          data: {
+              labels: {{ user_months|tojson }},
+              datasets: [{
+                  label: 'Users per Month',
+                  data: {{ user_counts|tojson }},
+                  backgroundColor: 'rgba(255, 122, 26, 0.6)',
+                  borderColor: 'rgba(255, 122, 26, 1)',
+                  borderWidth: 1
+              }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+
+      // Announcements Monthly Chart
+      new Chart(document.getElementById('announcementsChart'), {
+          type: 'bar',
+          data: {
+              labels: {{ announcement_months|tojson }},
+              datasets: [{
+                  label: 'Announcements per Month',
+                  data: {{ announcement_counts|tojson }},
+                  backgroundColor: 'rgba(76, 175, 80, 0.6)',
+                  borderColor: 'rgba(76, 175, 80, 1)',
+                  borderWidth: 1
+              }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+
+      // Feedback Monthly Chart
+      new Chart(document.getElementById('feedbackChart'), {
+          type: 'bar',
+          data: {
+              labels: {{ feedback_months|tojson }},
+              datasets: [{
+                  label: 'Feedback per Month',
+                  data: {{ feedback_counts|tojson }},
+                  backgroundColor: 'rgba(33, 150, 243, 0.6)',
+                  borderColor: 'rgba(33, 150, 243, 1)',
+                  borderWidth: 1
+              }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+
+      // Dropdown toggle
+      const userIcon = document.getElementById('userIcon');
+      const userDropdown = document.getElementById('userDropdown');
+      userIcon.addEventListener('click', () => userDropdown.classList.toggle('show'));
+    </script>
+  </body>
+</html>

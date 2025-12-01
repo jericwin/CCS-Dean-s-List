@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Feedback</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='logo.png') }}"
+      type="image/png"
+    />
+
+    <style>
+      :root {
+        --primary: #ff7a1a;
+        --primary-hover: #e06b17;
+        --secondary: #7b1f1f;
+        --bg-dark: #121212;
+        --bg-card: #1e1e1e;
+        --text-main: #e0e0e0;
+        --text-muted: #a0a0a0;
+        --border-color: #333;
+        --sidebar-width: 260px;
+        --transition: all 0.3s ease;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-dark);
+        color: var(--text-main);
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar Styles */
+      .sidebar {
+        width: var(--sidebar-width);
+        background-color: var(--bg-card);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        padding: 2rem 1.5rem;
+        position: fixed;
+        height: 100vh;
+        z-index: 100;
+      }
+
+      .sidebar-header {
+        margin-bottom: 3rem;
+        text-align: center;
+      }
+
+      .sidebar-header h2 {
+        color: var(--primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.8rem 1rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: var(--transition);
+        font-weight: 500;
+      }
+
+      .nav-link:hover,
+      .nav-link.active {
+        background-color: rgba(255, 122, 26, 0.1);
+        color: var(--primary);
+      }
+
+      .nav-link i {
+        width: 20px;
+        text-align: center;
+      }
+
+      /* User Menu */
+      .user-menu {
+        margin-top: auto;
+        position: relative;
+      }
+
+      .user-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.8rem 1rem;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-main);
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .user-btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        bottom: 110%;
+        left: 0;
+        width: 100%;
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.5rem;
+        display: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .dropdown-menu.show {
+        display: block;
+        animation: slideUp 0.2s ease;
+      }
+
+      .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.8rem 1rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 6px;
+        transition: var(--transition);
+      }
+
+      .dropdown-item:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: var(--text-main);
+      }
+
+      .dropdown-item.danger {
+        color: #ff4d4d;
+      }
+
+      .dropdown-item.danger:hover {
+        background-color: rgba(255, 77, 77, 0.1);
+      }
+
+      /* Content Area */
+      .content {
+        margin-left: var(--sidebar-width);
+        padding: 3rem;
+        flex: 1;
+        width: calc(100% - var(--sidebar-width));
+      }
+
+      .page-header {
+        margin-bottom: 2.5rem;
+      }
+
+      .page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+      }
+
+      .subtitle {
+        color: var(--text-muted);
+        font-size: 1rem;
+      }
+
+      /* Feedback Grid */
+      .feedback-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .feedback-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .feedback-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--primary);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .student-info {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+      }
+
+      .student-avatar {
+        width: 40px;
+        height: 40px;
+        background-color: rgba(255, 122, 26, 0.1);
+        color: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+      }
+
+      .student-details h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-main);
+      }
+
+      .student-details span {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      .position-badge {
+        background-color: rgba(255, 255, 255, 0.05);
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+      }
+
+      .feedback-text {
+        color: var(--text-muted);
+        line-height: 1.6;
+        font-size: 0.95rem;
+        flex: 1;
+      }
+
+      .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 4rem 2rem;
+        background-color: var(--bg-card);
+        border-radius: 12px;
+        border: 1px dashed var(--border-color);
+        color: var(--text-muted);
+      }
+
+      .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+        }
+        .sidebar.active {
+          transform: translateX(0);
+        }
+        .content {
+          margin-left: 0;
+          width: 100%;
+          padding: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>ADMIN PANEL</h2>
+      </div>
+      <div class="nav-links">
+        <a href="{{ url_for('admin_dashboard') }}" class="nav-link">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('admin_announcements') }}" class="nav-link">
+          <i class="fas fa-bullhorn"></i>
+          <span>Announcements</span>
+        </a>
+        <a
+          href="{{ url_for('admin_deans_list_applications') }}"
+          class="nav-link"
+        >
+          <i class="fas fa-award"></i>
+          <span>Dean's List</span>
+        </a>
+        <a href="{{ url_for('admin_chat') }}" class="nav-link">
+          <i class="fas fa-comments"></i>
+          <span>Chat Support</span>
+        </a>
+        <a href="{{ url_for('admin_feedback') }}" class="nav-link active">
+          <i class="fas fa-comment-dots"></i>
+          <span>Feedback</span>
+        </a>
+        <a href="{{ url_for('admin_ranking') }}" class="nav-link">
+          <i class="fas fa-trophy"></i>
+          <span>Ranking</span>
+        </a>
+      </div>
+      <div class="user-menu">
+        <div class="user-btn" onclick="toggleUserMenu()">
+          <div class="user-info">
+            <i class="fas fa-user-circle"></i>
+            <span>Admin</span>
+          </div>
+          <i class="fas fa-chevron-up"></i>
+        </div>
+        <div class="dropdown-menu" id="userDropdown">
+          <a href="{{ url_for('admin_settings') }}" class="dropdown-item">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+          </a>
+          <a href="{{ url_for('admin_logout') }}" class="dropdown-item danger">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function toggleUserMenu() {
+        const menu = document.getElementById("userDropdown");
+        menu.classList.toggle("show");
+      }
+
+      // Close dropdown when clicking outside
+      window.addEventListener("click", function (e) {
+        const userBtn = document.querySelector(".user-btn");
+        const menu = document.getElementById("userDropdown");
+
+        if (!userBtn.contains(e.target) && !menu.contains(e.target)) {
+          menu.classList.remove("show");
+        }
+      });
+    </script>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="page-header">
+        <h1>Student Feedback</h1>
+        <p class="subtitle">View feedback and suggestions from students</p>
+      </div>
+
+      {% if feedbacks %}
+      <div class="feedback-grid">
+        {% for f in feedbacks %}
+        <div class="feedback-card">
+          <div class="card-header">
+            <div class="student-info">
+              <div class="student-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="student-details">
+                {% if f.anonymous %}
+                <h3>Anonymous Student</h3>
+                <span>Hidden Identity</span>
+                {% else %}
+                <h3>Student ID: {{ f.student_id }}</h3>
+                <span>Verified Student</span>
+                {% endif %}
+              </div>
+            </div>
+            <span class="position-badge">#{{ f.position }}</span>
+          </div>
+          <div class="feedback-text">{{ f.feedback }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-comment-slash"></i>
+        <p>No feedback available yet.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <script>
+      // Add logout confirmation
+      const logoutLink = document.querySelector(".dropdown-item.danger");
+      if (logoutLink) {
+        logoutLink.addEventListener("click", (e) => {
+          if (!confirm("Are you sure you want to logout?")) {
+            e.preventDefault();
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

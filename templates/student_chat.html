@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Student Chat | CCS Portal</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='logo.png') }}"
+      type="image/png"
+    />
+
+    <style>
+      :root {
+        --dark-gray: #121212;
+        --orange: #ff7a1a;
+        --dark-bg: #1e1b1b;
+        --light-bg: #2a2323;
+        --phoenix-orange: #ff6b35;
+        --text-light: #f1e9e6;
+        --text-muted: #b8afaf;
+      }
+
+      /* Reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--dark-bg);
+        color: var(--text-light);
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 260px;
+        background: var(--dark-gray);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 20px 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+      }
+      .sidebar h2 {
+        text-align: center;
+        font-weight: 700;
+        font-size: 22px;
+        color: white;
+        margin-bottom: 30px;
+      }
+      .nav-links {
+        flex: 1;
+      }
+      .nav-links a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #fff;
+        padding: 14px 22px;
+        margin: 8px 15px;
+        text-decoration: none;
+        font-weight: 500;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+      }
+      .nav-links a i {
+        font-size: 18px;
+      }
+      .nav-links a:hover {
+        background: var(--orange);
+        color: white;
+      }
+      .user-menu {
+        padding: 15px;
+        text-align: center;
+      }
+      .user-icon {
+        background: var(--light-bg);
+        padding: 12px;
+        border-radius: 12px;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      .user-icon i {
+        font-size: 20px;
+      }
+      .dropdown {
+        display: none;
+        margin-top: 10px;
+        background: var(--light-bg);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .dropdown a {
+        display: block;
+        padding: 10px;
+        color: var(--text-light);
+        text-decoration: none;
+        transition: 0.3s;
+      }
+      .dropdown a:hover {
+        background: var(--orange);
+        color: white;
+      }
+
+      /* Main Content */
+      .content {
+        margin-left: 260px;
+        flex: 1;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+      }
+      .content h1 {
+        font-size: 24px;
+        color: var(--phoenix-orange);
+        margin-bottom: 20px;
+      }
+
+      /* Chat container */
+      .chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--light-bg);
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+      }
+
+      /* Messages */
+      .messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: #2c2424;
+      }
+      .message {
+        max-width: 65%;
+        padding: 12px 16px;
+        border-radius: 20px;
+        word-wrap: break-word;
+        font-size: 14px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
+      .message .timestamp {
+        font-size: 10px;
+        margin-top: 4px;
+        display: block;
+        text-align: right;
+        opacity: 0.7;
+      }
+
+      /* Admin (left) */
+      .admin-msg {
+        background: var(--maroon);
+        color: #fff;
+        align-self: flex-start;
+        border-top-left-radius: 4px;
+      }
+
+      /* Student (right) */
+      .student-msg {
+        background: var(--phoenix-orange);
+        color: #fff;
+        align-self: flex-end;
+        border-top-right-radius: 4px;
+      }
+
+      /* Input */
+      .input-area {
+        display: flex;
+        border-top: 1px solid #444;
+        padding: 12px;
+        background: #1e1b1b;
+      }
+      .input-area input {
+        flex: 1;
+        padding: 12px 16px;
+        border-radius: 20px;
+        border: none;
+        outline: none;
+        background: #3a3030;
+        color: var(--text-light);
+      }
+      .input-area input::placeholder {
+        color: #aaa;
+      }
+      .input-area button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 20px;
+        background: var(--phoenix-orange);
+        color: white;
+        cursor: pointer;
+        margin-left: 8px;
+        transition: 0.3s;
+      }
+      .input-area button:hover {
+        background: #e85d2b;
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--orange);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #2a2323;
+      }
+
+      @media screen and (max-width: 768px) {
+        .sidebar {
+          width: 200px;
+        }
+        .content {
+          margin-left: 200px;
+          padding: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div>
+        <h2>🐦‍🔥 CCS Portal</h2>
+        <div class="nav-links">
+          <a href="{{ url_for('student_module') }}"
+            ><i class="fas fa-home"></i> Dashboard</a
+          >
+          <a href="{{ url_for('student_announcements') }}"
+            ><i class="fas fa-bullhorn"></i> Announcements</a
+          >
+          <a href="{{ url_for('student_notifications') }}"
+            ><i class="fas fa-bell"></i> Notifications</a
+          >
+          <a href="{{ url_for('student_chat') }}"
+            ><i class="fas fa-headset"></i> Chat Support</a
+          >
+          <a href="{{ url_for('student_deans_list') }}"
+            ><i class="fas fa-award"></i> Dean’s List</a
+          >
+          <a href="{{ url_for('student_feedback') }}"
+            ><i class="fas fa-comment-dots"></i> Feedback</a
+          >
+        </div>
+      </div>
+      <div class="user-menu">
+        <div class="user-icon" id="userIcon">
+          <i class="fas fa-user-circle"></i> <span>{{ first_name }}</span>
+        </div>
+        <div class="dropdown" id="userDropdown">
+          <a href="{{ url_for('student_settings') }}">Settings</a>
+          <a href="{{ url_for('logout') }}"
+            ><i class="fas fa-sign-out-alt"></i> Logout</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="content">
+      <h1><i class="fas fa-headset"></i> Chat Support</h1>
+      <div class="chat-container">
+        <div class="messages" id="messages"></div>
+        <div class="input-area">
+          <input
+            type="text"
+            id="messageInput"
+            placeholder="Type a message..."
+          />
+          <button onclick="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+      const userIcon = document.getElementById('userIcon');
+      const userDropdown = document.getElementById('userDropdown');
+      userIcon.onclick = () => { userDropdown.style.display = userDropdown.style.display === "block" ? "none" : "block"; }
+      window.onclick = e => { if(!userIcon.contains(e.target)){ userDropdown.style.display = "none"; } }
+
+      const messagesDiv = document.getElementById('messages');
+      const socket = io();
+      const studentId = {{ user_id }};
+      const studentName = "{{ first_name }}";
+
+      // Join specific room for this student
+      socket.on('connect', () => {
+          socket.emit('join', { room: `user_${studentId}` });
+      });
+
+      // Load initial history via fetch (optional, but good for persistence check)
+      function loadHistory() {
+          fetch(`/chat/messages/${studentId}`)
+          .then(res => res.json())
+          .then(data => {
+              messagesDiv.innerHTML = '';
+              data.forEach(appendMessage);
+              messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          });
+      }
+
+      // Listen for incoming messages
+      socket.on('receive_message', function(data) {
+          // Only display if it belongs to this conversation
+          const isMyMessage = (data.sender_role === 'student' && data.sender_id == studentId);
+          const isForMe = (data.sender_role === 'admin' && data.receiver_id == studentId);
+
+          if (isMyMessage || isForMe) {
+              appendMessage(data);
+              messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          }
+      });
+
+      function appendMessage(m) {
+          const div = document.createElement('div');
+          // Check if the message is from admin or student
+          // If sender_role is admin, it's an admin-msg (left)
+          // If sender_role is student, it's a student-msg (right)
+          div.classList.add('message', m.sender_role === 'admin' ? 'admin-msg' : 'student-msg');
+
+          const msgText = document.createElement('div');
+          msgText.textContent = m.message;
+          div.appendChild(msgText);
+
+          const time = document.createElement('span');
+          time.classList.add('timestamp');
+          // Handle timestamp format
+          const dateStr = m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Just now';
+          time.textContent = dateStr;
+          div.appendChild(time);
+
+          messagesDiv.appendChild(div);
+      }
+
+      function sendMessage() {
+          const msgInput = document.getElementById('messageInput');
+          const msg = msgInput.value.trim();
+          if(!msg) return;
+
+          socket.emit('send_message', {
+              sender_role: 'student',
+              sender_name: studentName,
+              sender_id: studentId,
+              receiver_id: 0, // 0 represents Admin
+              message: msg
+          });
+
+          msgInput.value = '';
+      }
+
+      // Initial load
+      loadHistory();
+
+      document.getElementById("messageInput").addEventListener("keypress", function(e) {
+          if (e.key === "Enter") {
+              e.preventDefault();
+              sendMessage();
+          }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+    <title>Student Signup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+    <style>
+        :root {
+            --maroon: #7B1F1F;
+            --orange: #FF7A1A;
+            --grey: #6B6B6B;
+            --light-grey: #F3F3F3;
+            --dark-bg: #1E1E1E;
+            --card-bg: #2C2C2C;
+            --text-light: #F1E9E6;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #1E1E1E;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100vw;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Moving Background Animation (Lines and Boxes) */
+        .moving-line {
+            position: absolute;
+            top: 50%;
+            left: -100%;
+            width: 100vw;
+            height: 2px;
+            background: var(--orange);
+            animation: moveLine 6s linear infinite;
+        }
+
+        .moving-box {
+            position: absolute;
+            background-color: var(--orange);
+            width: 30px;
+            height: 30px;
+            opacity: 0.5;
+            animation: floatBox 10s linear infinite;
+        }
+
+        @keyframes moveLine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        @keyframes floatBox {
+            0% { top: 0; left: 0; }
+            50% { top: 80%; left: 50%; }
+            100% { top: 0; left: 100%; }
+        }
+
+        /* Card Design */
+        .card {
+            background: var(--card-bg);
+            padding: 40px 32px;
+            border-radius: 16px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 380px;
+            box-sizing: border-box;
+            color: white;
+            z-index: 1;
+        }
+
+        .header { text-align: center; margin-bottom: 20px; }
+        .header img { width: 90px; height: auto; margin-bottom: 10px; }
+        .header h2 { margin: 0; color: var(--orange); }
+        .header p { font-size: 14px; color: #ddd; }
+
+        /* Flash messages */
+        .flash {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 500;
+            opacity: 0.95;
+            transition: opacity 0.5s ease;
+        }
+        .flash.success { background: #28a74533; color: var(--success); border: 1px solid var(--success); }
+        .flash.danger { background: #dc354533; color: var(--danger); border: 1px solid var(--danger); }
+        .flash.warning { background: #ff980033; color: var(--warning); border: 1px solid var(--warning); }
+
+        /* Input Fields */
+        input[type=text], input[type=email], input[type=password] {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        input::placeholder { color: #ccc; }
+        input:focus { border-color: var(--orange); outline: none; }
+
+        /* Button */
+        button {
+            background: var(--maroon);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover { background: #5e1717; }
+
+        /* Link */
+        .link {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .link a {
+            color: var(--orange);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .link a:hover { text-decoration: underline; }
+
+        /* Mobile Responsiveness */
+        @media screen and (max-width: 768px) {
+            .card { padding: 30px 25px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Moving lines and floating boxes (background elements) -->
+    <div class="moving-line"></div>
+    <div class="moving-box" style="animation-delay: 0s; top: 10%; left: 10%;"></div>
+    <div class="moving-box" style="animation-delay: 2s; top: 50%; left: 30%;"></div>
+    <div class="moving-box" style="animation-delay: 4s; top: 70%; left: 60%;"></div>
+    <div class="moving-box" style="animation-delay: 6s; top: 30%; left: 80%;"></div>
+
+    <!-- Signup Form -->
+    <form method="POST" class="card">
+        <div class="header">
+            <img src="{{ url_for('static', filename='ccs_logo.png') }}" alt="CCS Logo">
+            <h2>Student Signup</h2>
+            <p>Create your student portal account</p>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, msg in messages %}
+                    <div class="flash {{ category }}">{{ msg }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <input type="text" name="fullname" placeholder="Full Name" required>
+        <input type="email" name="email" placeholder="Email Address" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Create Account</button>
+        <div class="link">Already registered? <a href="/login">Login here</a></div>
+    </form>
+
+</body>
+</html>

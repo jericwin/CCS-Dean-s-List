@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notifications | CCS Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+    <style>
+        :root {
+            --maroon: #6A1B1B;
+            --dark-gray: #121212;
+            --orange: #FF7A1A;
+            --dark-bg: #1E1B1B;
+            --light-bg: #2A2323;
+            --text-light: #F1E9E6;
+            --text-muted: #B8AFAF;
+
+            --green: #1B5E20;
+            --red: #B71C1C;
+            --yellow: #FF8F00;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-light);
+            display:flex;
+            height:100vh;
+            overflow:hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width:260px;
+            background: var(--dark-gray);
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+            padding:20px 0;
+            position:fixed;
+            top:0; left:0; bottom:0;
+        }
+        .sidebar h2 {
+            text-align:center;
+            font-weight:700;
+            font-size:22px;
+            color:white;
+            margin-bottom:30px;
+        }
+        .nav-links {
+            flex:1;
+        }
+        .nav-links a {
+            display:flex;
+            align-items:center;
+            gap:12px;
+            color:#fff;
+            padding:14px 22px;
+            margin:8px 15px;
+            text-decoration:none;
+            font-weight:500;
+            border-radius:10px;
+            transition: all 0.3s ease;
+        }
+        .nav-links a i { font-size:18px; }
+        .nav-links a:hover {
+            background: var(--orange);
+            color:white;
+        }
+
+        /* Content */
+        .content {
+            margin-left:260px;
+            padding:30px;
+            flex:1;
+            overflow-y:auto;
+        }
+        .content h1 {
+            font-size:26px;
+            font-weight:700;
+            color: var(--orange);
+            margin-bottom:25px;
+        }
+
+        /* Notifications */
+        .notification-card {
+            background: var(--light-bg);
+            padding:20px;
+            border-radius:12px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.35);
+            margin-bottom:18px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .notification-card:hover {
+            transform: translateY(-3px);
+            box-shadow:0 6px 16px rgba(0,0,0,0.5);
+        }
+
+        .notification-header {
+            display:flex;
+            align-items:center;
+            gap:10px;
+            margin-bottom:8px;
+        }
+
+        .notification-header h4 {
+            font-size:17px;
+            font-weight:600;
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+
+        .status-badge {
+            font-weight:600;
+            padding:3px 10px;
+            border-radius:6px;
+            font-size:13px;
+            text-transform:capitalize;
+        }
+        .status-approved { background: var(--green); color:white; }
+        .status-rejected { background: var(--red); color:white; }
+        .status-pending { background: var(--yellow); color:white; }
+
+        .notification-message {
+            font-size:15px;
+            line-height:1.5;
+            margin-bottom:12px;
+        }
+
+        .notification-time {
+            font-size:13px;
+            color: var(--text-muted);
+            display:flex;
+            align-items:center;
+            gap:6px;
+        }
+
+        /* User Menu */
+        .user-menu { padding:15px; text-align:center; }
+        .user-icon {
+            background: var(--light-bg);
+            padding:12px;
+            border-radius:12px;
+            color:white;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:10px;
+        }
+        .user-icon i { font-size:20px; }
+        .dropdown {
+            display:none;
+            margin-top:10px;
+            background: var(--light-bg);
+            border-radius:10px;
+            overflow:hidden;
+        }
+        .dropdown a {
+            display:block;
+            padding:10px;
+            color: var(--text-light);
+            text-decoration:none;
+            transition:0.3s;
+        }
+        .dropdown a:hover { 
+            background: var(--orange); 
+            color:white; 
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div>
+        <h2>🐦‍🔥 CCS Portal</h2>
+        <div class="nav-links">
+            <a href="{{ url_for('student_module') }}"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="{{ url_for('student_announcements') }}"><i class="fas fa-bullhorn"></i> Announcements</a>
+            <a href="{{ url_for('student_notifications') }}"><i class="fas fa-bell"></i> Notifications</a>
+            <a href="{{ url_for('student_chat') }}"><i class="fas fa-headset"></i> Chat Support</a>
+            <a href="{{ url_for('student_deans_list') }}"><i class="fas fa-award"></i> Dean’s List</a>
+            <a href="{{ url_for('student_feedback') }}"><i class="fas fa-comment-dots"></i> Feedback</a>
+        </div>
+    </div>
+    <div class="user-menu">
+        <div class="user-icon" id="userIcon">
+            <i class="fas fa-user-circle"></i> <span>User</span>
+        </div>
+        <div class="dropdown" id="userDropdown">
+            <a href="{{ url_for('student_settings') }}">Settings</a>
+            <a href="{{ url_for('login') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="content">
+    <h1>Notifications</h1>
+
+    {% if notifications %}
+        {% for notification in notifications %}
+        <div class="notification-card">
+            <div class="notification-header">
+                {% if notification.status == "Approved" %}
+                    <i class="fas fa-check-circle" style="color: var(--green);"></i>
+                {% elif notification.status == "Rejected" %}
+                    <i class="fas fa-times-circle" style="color: var(--red);"></i>
+                {% else %}
+                    <i class="fas fa-hourglass-half" style="color: var(--yellow);"></i>
+                {% endif %}
+                <h4>
+                    Application Status: 
+                    <span class="status-badge status-{{ notification.status|lower }}">{{ notification.status }}</span>
+                </h4>
+            </div>
+            <p class="notification-message"><strong>Comment:</strong> {{ notification.message }}</p>
+            <div class="notification-time">
+                <i class="fas fa-clock"></i> {{ notification.created_at }}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color:var(--text-muted);">No notifications available.</p>
+    {% endif %}
+</div>
+
+<script>
+const userIcon = document.getElementById('userIcon');
+const userDropdown = document.getElementById('userDropdown');
+
+userIcon.addEventListener('click', () => {
+    userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
+});
+
+window.addEventListener('click', (e) => {
+    if (!userIcon.contains(e.target)) userDropdown.style.display = 'none';
+});
+</script>
+
+</body>
+</html>

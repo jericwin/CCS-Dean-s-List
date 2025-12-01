@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dean's List Application | CCS Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link rel="shortcut icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+
+<style>
+:root {
+    --charcoal-gray: #36454F;
+    --dark-gray: #121212;
+    --maroon: #6A1B1B;
+    --orange: #FF7A1A;
+    --dark-bg: #1E1B1B;
+    --light-bg: #2A2323;
+    --phoenix-orange: #FF6B35;
+    --text-light: #F1E9E6;
+}
+
+/* Reset */
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+    font-family:'Inter', sans-serif;
+    background: var(--dark-bg);
+    color: var(--text-light);
+    display:flex;
+    min-height:100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width:260px;
+    background: var(--dark-gray);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:20px 0;
+    position:fixed;
+    top:0; left:0; bottom:0;
+}
+.sidebar h2 {
+    text-align:center;
+    font-weight:700;
+    font-size:22px;
+    color:white;
+    margin-bottom:30px;
+}
+.nav-links { flex:1; }
+.nav-links a {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:#fff;
+    padding:14px 22px;
+    margin:8px 15px;
+    text-decoration:none;
+    font-weight:500;
+    border-radius:10px;
+    transition: all 0.3s ease;
+}
+.nav-links a i { font-size:18px; }
+.nav-links a:hover { background: var(--orange); color:white; }
+.user-menu { padding:15px; text-align:center; }
+.user-icon {
+    background: var(--light-bg);
+    padding:12px;
+    border-radius:12px;
+    color:white;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+}
+.user-icon i { font-size:20px; }
+.dropdown {
+    display:none;
+    margin-top:10px;
+    background: var(--light-bg);
+    border-radius:10px;
+    overflow:hidden;
+}
+.dropdown a {
+    display:block;
+    padding:10px;
+    color: var(--text-light);
+    text-decoration:none;
+    transition:0.3s;
+}
+.dropdown a:hover { background: var(--orange); color:white; }
+
+/* Main Content */
+.content {
+    margin-left:260px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    padding:30px;
+}
+
+/* Headings */
+.content h1 {
+    font-size:24px;
+    color: var(--phoenix-orange);
+    margin-bottom:20px;
+}
+.content h2 {
+    font-size:20px;
+    color: var(--phoenix-orange);
+    margin-top:40px;
+    margin-bottom:20px;
+}
+
+/* Form */
+form {
+    background: var(--light-bg);
+    padding:25px;
+    border-radius:16px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.4);
+    margin-bottom:30px;
+}
+form label { font-weight:600; margin:12px 0 6px; display:block; color: var(--text-light); }
+input[type="file"], button {
+    width:100%; padding:12px; margin:8px 0 16px;
+    border-radius:12px; border:none; font-size:15px;
+    background:#3A3030; color: var(--text-light);
+}
+button {
+    background: var(--phoenix-orange);
+    cursor:pointer;
+    font-weight:600;
+    transition:0.3s;
+}
+button:hover { background:#e85d2b; }
+
+/* Preview container */
+.preview-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 140px));
+    gap:15px;
+    margin-top:15px;
+    justify-content:center;
+}
+.preview-card {
+    background:#3A3030; padding:10px; border-radius:12px;
+    text-align:center; color: var(--text-light);
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    position:relative; transition: all 0.3s ease;
+    opacity:0; transform: translateY(10px);
+     flex: 1 1 160px; /* slightly larger minimum width */
+    max-width: 200px; /* bigger cards */
+    padding: 25px; /* more padding for breathing space */
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4); /* slightly stronger shadow */
+    border-radius: 12px; /* rounded corners for modern look */
+    transition: transform 0.2s; /* smooth hover effect */
+}
+.preview-card:hover {
+    transform: scale(1.05); /* subtle zoom on hover */
+}
+
+.preview-card i.file-icon {
+    font-size: 56px; /* larger icon */
+    margin-bottom: 12px;
+    color: #800000; /* optional: maroon icon for style */
+}
+
+.preview-card a.view-btn {
+    padding: 10px 16px; /* larger button */
+    font-size: 16px; /* easier to read */
+    border-radius: 8px;
+    background-color: #800000; /* maroon button */
+    color: #fff;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.preview-card a.view-btn:hover {
+    background-color: #a00000; /* darker on hover */
+}
+.preview-card.show { opacity:1; transform: translateY(0); }
+.preview-card img { max-width:120px; max-height:120px; border-radius:10px; margin-bottom:8px; }
+.preview-card a.view-btn, .preview-card button.remove-btn {
+    display:inline-block; width:90px; padding:6px 0;
+    border-radius:10px; font-weight:600; text-decoration:none; cursor:pointer;
+    font-size:13px; text-align:center; margin-top:5px;
+}
+.preview-card a.view-btn { background: var(--maroon); color:white; }
+.preview-card a.view-btn:hover { background:#5c1616; }
+.preview-card button.remove-btn { background:#e85d2b; color:white; border:none; }
+.preview-card button.remove-btn:hover { background:#cc5a00; }
+.preview-card i.file-icon { display:block; font-size:32px; margin-bottom:6px; color: var(--phoenix-orange); }
+
+/* Previous Applications */
+.app-cards-container {
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:15px;
+}
+.app-card {
+    background:#3A3030;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    transition:0.3s;
+}
+.app-card:hover {
+    transform: translateY(-2px);
+    box-shadow:0 6px 18px rgba(0,0,0,0.5);
+}
+.app-card p { font-size:14px; margin:6px 0; }
+.app-card a.download { color: var(--phoenix-orange); font-weight:600; text-decoration:none; }
+.app-card a.download:hover { text-decoration:underline; }
+.app-files {
+    display: flex;
+    gap: 20px; /* slightly larger gap for better separation */
+    flex-wrap: nowrap; /* keep in a single row */
+    justify-content: flex-start; /* align left */
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width:8px; }
+::-webkit-scrollbar-thumb { background:#FF7A1A; border-radius:10px; }
+::-webkit-scrollbar-track { background:#2A2323; }
+
+/* Notification */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+.notify {
+    background: var(--phoenix-orange);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    margin-bottom: 10px;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.5s ease;
+}
+.notify.show { opacity:1; transform: translateY(0); }
+
+/* Custom File Input */
+input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0 16px;
+    border-radius: 12px;
+    border: 1px solid var(--phoenix-orange);
+    background: var(--dark-bg);
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+input[type="file"]:hover {
+    background: var(--orange);
+}
+
+/* Custom File Input Button */
+input[type="file"]::-webkit-file-upload-button {
+    background: var(--phoenix-orange);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+input[type="file"]::-webkit-file-upload-button:hover {
+    background-color: #e85d2b;
+}
+
+/* Style for the label of file input */
+label {
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 10px;
+    display: block;
+    font-size: 16px;
+}
+
+/* General Form Field Styling */
+input[type="text"], select, input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0 16px;
+    border-radius: 12px;
+    border: none;
+    font-size: 15px;
+    background: #3A3030;
+    color: var(--text-light);
+}
+
+/* Button Styling */
+button {
+    background: var(--phoenix-orange);
+    cursor: pointer;
+    font-weight: 600;
+    padding: 12px;
+    border-radius: 12px;
+    transition: 0.3s;
+    width: 100%;
+}
+
+button:hover {
+    background: #e85d2b;
+}
+
+/* Label Styling */
+label {
+    font-weight: 600;
+    margin: 12px 0 6px;
+    display: block;
+    color: var(--text-light);
+}
+
+/* Flash message container */
+.alert-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: auto;
+    max-width: 400px;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    transition: opacity 0.5s ease-out;
+}
+
+/* Success message (Orange) */
+.alert-success {
+    background-color: #FFA500; /* Orange */
+    color: white;
+    font-weight: bold;
+    animation: fadeInOut 3s ease-out;
+}
+
+/* Error message (Red) */
+.alert-danger {
+    background-color: #f44336; /* Red */
+    color: white;
+    font-weight: bold;
+    animation: fadeInOut 3s ease-out;
+}
+
+/* General styling for flash messages */
+.alert {
+    display: inline-block;
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+/* Animation for fade-in and fade-out */
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translateX(10px);
+    }
+    20% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(10px);
+    }
+}
+/* Notification styling */
+.notify {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #e85d2b; /* Orange */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 1s ease-out; /* Fade out transition */
+}
+
+/* Fade-out effect */
+.notify.fade-out {
+    opacity: 0;
+    transition: opacity 1s ease-out;
+}
+
+/* Optional styling for the notification container */
+.notify.show {
+    animation: slideIn 0.5s ease-in-out;
+}
+
+/* General Form Field Styling */
+input[type="text"], select, input[type="file"], input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0 16px;
+    border-radius: 12px;
+    border: none;
+    font-size: 15px;
+    background: #3A3030;
+    color: var(--text-light);
+}
+
+/* Button Styling */
+button {
+    background: var(--phoenix-orange);
+    cursor: pointer;
+    font-weight: 600;
+    padding: 12px;
+    border-radius: 12px;
+    transition: 0.3s;
+    width: 100%;
+}
+
+button:hover {
+    background: #e85d2b;
+}
+
+
+@keyframes slideIn {
+    0% {
+        transform: translateX(20px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+
+/* Responsive */
+@media screen and (max-width:768px) {
+    .sidebar { width:200px; }
+    .content { margin-left:200px; padding:20px; }
+    .app-card, .preview-card img { max-width:120px; max-height:120px; }
+    .app-cards-container { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<!-- Sidebar -->
+<div class="sidebar">
+    <div>
+        <h2>🐦‍🔥 CCS Portal</h2>
+        <div class="nav-links">
+            <a href="{{ url_for('student_module') }}"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="{{ url_for('student_announcements') }}"><i class="fas fa-bullhorn"></i> Announcements</a>
+            <a href="{{ url_for('student_notifications') }}"><i class="fas fa-bell"></i> Notifications</a>
+            <a href="{{ url_for('student_chat') }}"><i class="fas fa-headset"></i> Chat Support</a>
+            <a href="{{ url_for('student_deans_list') }}"><i class="fas fa-award"></i> Dean’s List</a>
+            <a href="{{ url_for('student_feedback') }}"><i class="fas fa-comment-dots"></i> Feedback</a>
+        </div>
+    </div>
+    <div class="user-menu">
+        <div class="user-icon" id="userIcon">
+            <i class="fas fa-user-circle"></i> <span>User</span>
+        </div>
+        <div class="dropdown" id="userDropdown">
+            <a href="{{ url_for('student_settings') }}">Settings</a>
+            <a href="{{ url_for('login') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+</div>
+
+<!-- Notification -->
+<div class="notification" id="notification"></div>
+
+<!-- Main Content -->
+<div class="content">
+    <h1><i class="fas fa-award"></i> Apply for Dean's List</h1>
+
+    <!-- Display Flash Messages (Success or Error) -->
+    
+
+    <!-- Application Form -->
+    <form id="deanForm" method="POST" action="{{ url_for('student_deans_list') }}" enctype="multipart/form-data">
+        <!-- Full Name Auto-fill from Session -->
+        <label for="fullname">Full Name:</label>
+        <input type="text" id="fullname" name="fullname" required readonly value="{{ session['full_name'] }}">
+
+        <!-- Course and Section Dropdown -->
+        <label for="course">Course and Section:</label>
+        <select id="course" name="course" required>
+            <option value="bsit_1a">BSIT 1 A</option>
+            <option value="bsit_1b">BSIT 1 B</option>
+            <option value="bsit_1c">BSIT 1 C</option>
+            <option value="bsit_1d">BSIT 1 D</option>
+            <option value="bsit_2a">BSIT 2 A</option>
+            <option value="bsit_2b">BSIT 2 B</option>
+            <option value="bsit_2c">BSIT 2 C</option>
+            <option value="bsit_2d">BSIT 2 D</option>
+            <option value="bsit_3a">BSIT 3A WMAD</option>
+            <option value="bsit_3b">BSIT 3B SMP</option>
+            <option value="bsit_3c">BSIT 3C AMG</option>
+            <option value="bsit_3d">BSIT 3D NETAD</option>
+            <option value="bsit_4a">BSIT 4A WMAD</option>
+            <option value="bsit_4b">BSIT 4B SMP</option>
+            <option value="bsit_4c">BSIT 4C AMG</option>
+            <option value="bsit_4d">BSIT 4D NETAD</option>
+            <option value="bsis_1a">BSIS 1A</option>
+            <option value="bsis_1b">BSIS 1B</option>
+            <option value="bsis_2a">BSIS 2A</option>
+            <option value="bsis_2b">BSIS 2B</option>
+            <option value="bsis_3a">BSIS 3A</option>
+            <option value="bsis_3b">BSIS 3B</option>
+            <option value="bsis_4a">BSIS 4A</option>
+            <option value="bsis_4b">BSIS 4B</option>
+            <option value="bscs_1a">BSCS 1A</option>
+            <option value="bscs_1b">BSCS 1B</option>
+            <option value="bscs_2a">BSCS 2A</option>
+            <option value="bscs_2b">BSCS 2B</option>
+            <option value="bscs_3a">BSCS 3A</option>
+            <option value="bscs_3b">BSCS 3B</option>
+            <option value="bscs_4a">BSCS 4A</option>
+            <option value="bscs_4b">BSCS 4B</option>
+
+            <!-- Add more options here -->
+        </select>
+
+        <!-- Academic Year Dropdown -->
+<label for="academic_year">Select Academic Year:</label>
+<select id="academic_year" name="academic_year" required>
+    <option value="">--Select Academic Year--</option>
+    <option value="2024-2025">2024-2025</option>
+    <option value="2025-2026">2025-2026</option>
+    <option value="2026-2027">2026-2027</option>
+    <option value="2028-2029">2028-2029</option>
+</select>
+
+<!-- Semester Dropdown -->
+<label for="semester">Select Semester:</label>
+<select id="semester" name="semester" required>
+    <option value="">--Select Semester--</option>
+    <option value="1st">1st Semester</option>
+    <option value="2nd">2nd Semester</option>
+</select>
+
+<label for="gwa">Enter your GWA (Grade Weighted Average):</label>
+    <input type="number" id="gwa" name="gwa" placeholder="Enter your GWA" step="0.01" required>
+
+
+        <!-- Upload COG and COE -->
+        <label for="cog">Upload Certificate of Grade (COG):</label>
+        <input type="file" name="cog" id="cog" accept="image/*,.pdf" required>
+
+        <label for="coe">Upload Certificate of Enrollment (COE):</label>
+        <input type="file" name="coe" id="coe" accept="image/*,.pdf" required>
+
+        <div class="preview-container" id="preview-container"></div>
+
+    <!-- GWA Input Field -->
+    
+
+
+        <div class="preview-container" id="preview-container"></div>
+        <button type="submit">Submit Application</button>
+    </form>
+
+    <h2>Previous Applications</h2>
+<div class="app-cards-container">
+    {% for app in applications %}
+    <div class="app-card">
+        <p><strong>Full Name:</strong> {{ app.full_name }}</p>
+        <p><strong>Status:</strong> {{ app.status if app.status else 'Pending' }}</p>
+        <p><strong>Course:</strong> {{ app.course }}</p>
+        <p><strong>Academic Year:</strong> {{ app.academic_year }}</p>
+        <p><strong>Semester:</strong> {{ app.semester }}</p>
+        
+        <div class="app-files">
+            {% if app.cog_filename %}
+            <div class="preview-card show">
+                <p>COG</p>
+                <i class="fas fa-file-pdf file-icon"></i>
+                <a class="download view-btn" href="{{ url_for('static', filename='uploads/' + app.cog_filename) }}" target="_blank">View COG</a>
+            </div>
+            {% endif %}
+            
+            {% if app.coe_filename %}
+            <div class="preview-card show">
+                <p>COE</p>
+                <i class="fas fa-file-pdf file-icon"></i>
+                <a class="download view-btn" href="{{ url_for('static', filename='uploads/' + app.coe_filename) }}" target="_blank">View COE</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+</div>
+
+
+
+
+<script>
+// ================= Sidebar Dropdown =================
+const userIcon = document.getElementById('userIcon');
+const userDropdown = document.getElementById('userDropdown');
+
+userIcon.addEventListener('click', () => {
+    userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
+});
+
+window.addEventListener('click', (e) => {
+    if (!userIcon.contains(e.target)) userDropdown.style.display = 'none';
+});
+
+// ================= File Preview Before Submit =================
+const corInput = document.getElementById('cor');
+const coeInput = document.getElementById('coe');
+const previewContainer = document.getElementById('preview-container');
+
+function createPreviewCard(file, label) {
+    if (!file) return;
+
+    const div = document.createElement('div');
+    div.classList.add('preview-card');
+
+    const iconClass = file.type.startsWith('image') ? 'fa-image' : 'fa-file-pdf';
+    const url = URL.createObjectURL(file);
+
+    div.innerHTML = `
+        <p>${label}</p>
+        <i class="fas ${iconClass} file-icon"></i>
+        <a href="${url}" class="view-btn" target="_blank">${file.type.startsWith('image') ? 'View Image' : 'Preview PDF'}</a>
+        <button class="remove-btn" type="button">Remove</button>
+    `;
+
+    previewContainer.appendChild(div);
+
+    // Animate appearance
+    setTimeout(() => div.classList.add('show'), 50);
+
+    // Remove button functionality
+    div.querySelector('.remove-btn').addEventListener('click', () => {
+        div.remove();
+        if (label === 'COR') corInput.value = '';
+        if (label === 'COE') coeInput.value = '';
+        URL.revokeObjectURL(url);
+    });
+}
+
+function clearPreviews() {
+    Array.from(previewContainer.querySelectorAll('.preview-card')).forEach(card => {
+        const link = card.querySelector('.view-btn');
+        if (link && link.href) URL.revokeObjectURL(link.href);
+    });
+    previewContainer.innerHTML = '';
+}
+
+// Handle file input changes
+function handleFileChange() {
+    clearPreviews();
+    if (corInput.files[0]) createPreviewCard(corInput.files[0], 'COR');
+    if (coeInput.files[0]) createPreviewCard(coeInput.files[0], 'COE');
+}
+
+corInput.addEventListener('change', handleFileChange);
+coeInput.addEventListener('change', handleFileChange);
+
+// ================= Form Submission =================
+const form = document.getElementById('deanForm');
+const appContainer = document.querySelector('.app-cards-container');
+
+form.addEventListener('submit', (e) => {
+    e.preventDefault(); // Prevent actual page reload
+
+    // Show success notification
+    showNotification("You've submitted successfully!");
+
+    // Add new application card dynamically
+    const newCard = document.createElement('div');
+    newCard.className = 'app-card';
+    newCard.innerHTML = `
+        <p>Status: Pending</p>
+        <div class="app-files">
+            ${corInput.files[0] ? createAppFileHTML(corInput.files[0], 'COR') : ''}
+            ${coeInput.files[0] ? createAppFileHTML(coeInput.files[0], 'COE') : ''}
+        </div>
+    `;
+    appContainer.prepend(newCard);
+
+    // Clear previews and inputs
+    clearPreviews();
+    corInput.value = '';
+    coeInput.value = '';
+});
+
+// Helper function to generate previous application file card HTML
+function createAppFileHTML(file, label) {
+    const iconClass = file.type.startsWith('image') ? 'fa-image' : 'fa-file-pdf';
+    const url = URL.createObjectURL(file);
+
+    return `
+        <div class="preview-card show">
+            <p>${label}</p>
+            <i class="fas ${iconClass} file-icon"></i>
+            <a class="download view-btn" href="${url}" target="_blank">${file.type.startsWith('image') ? 'View Image' : 'View PDF'}</a>
+        </div>
+    `;
+}
+
+// ================= Notification =================
+function showNotification(msg) {
+    // Check if a notification already exists
+    const existingNotification = document.querySelector('.notify');
+    if (existingNotification) {
+        existingNotification.remove(); // Remove previous notification if any
+    }
+
+    const div = document.createElement('div');
+    div.className = 'notify show';
+    div.innerText = msg;
+    document.body.appendChild(div); // Appends notification to the body
+
+    // Animation for notification appearance and disappearance
+    setTimeout(() => {
+        div.classList.add('fade-out');
+        setTimeout(() => div.remove(), 1000); // Remove after fade-out
+    }, 3000); // Wait for 3 seconds before fading out
+}
+</script>
+
+
+</body>
+</html>

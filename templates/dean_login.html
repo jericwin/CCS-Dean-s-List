@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='logo.png') }}"
+      type="image/png"
+    />
+
+    <title>Dean Login</title>
+
+    <style>
+      /* Root variables for color palette */
+      :root {
+        --maroon: #6a1b1b;
+        --orange: #ff7a1a;
+        --grey: #6b6b6b;
+        --text-light: #f1e9e6;
+        --light-bg: rgba(0, 0, 0, 0.7);
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: var(--light-bg);
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* Canvas for the moving background */
+      canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none; /* Allow clicks to pass through */
+        z-index: -1; /* Keep it behind the login form */
+      }
+
+      /* Animated Background Lines */
+      .line {
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background: var(--orange);
+        opacity: 0;
+        animation: move 6s ease-in-out infinite, fadeIn 1s forwards;
+      }
+
+      /* Horizontal lines with different animations */
+      .line1 {
+        top: 10%;
+        animation-delay: 0s, 1s; /* Delay before appearing */
+      }
+
+      .line2 {
+        top: 30%;
+        animation-delay: 1s, 1s;
+      }
+
+      .line3 {
+        top: 50%;
+        animation-delay: 2s, 1s;
+      }
+
+      .line4 {
+        top: 70%;
+        animation-delay: 3s, 1s;
+      }
+
+      /* Move lines from left to right */
+      @keyframes move {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+
+      /* Fade-in animation */
+      @keyframes fadeIn {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      /* Login container styling */
+      .login-container {
+        background: rgba(0, 0, 0, 0.75);
+        padding: 35px 25px;
+        border-radius: 18px;
+        width: 320px;
+        text-align: center;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        animation: slideUp 0.5s ease-out forwards;
+        z-index: 1;
+      }
+
+      /* Slide-up effect for login container */
+      @keyframes slideUp {
+        0% {
+          transform: translateY(50px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .login-container img {
+        width: 120px;
+        height: auto;
+        margin-bottom: 20px;
+        animation: bounce 2s infinite alternate;
+      }
+
+      /* Keyframe animation for logo bounce effect */
+      @keyframes bounce {
+        0% {
+          transform: translateY(0);
+        }
+        100% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .login-container h2 {
+        margin-bottom: 20px;
+        font-size: 22px;
+        font-weight: bold;
+        color: var(--orange);
+        letter-spacing: 1px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+        text-align: left;
+      }
+
+      input,
+      button {
+        width: 100%;
+        height: 45px;
+        border-radius: 8px;
+        font-size: 15px;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+      }
+
+      input {
+        padding: 0 12px;
+        border: none;
+        outline: none;
+        background: var(--grey);
+        color: var(--text-light);
+      }
+
+      input::placeholder {
+        color: var(--text-muted);
+      }
+
+      input:focus {
+        background: var(--orange);
+        color: var(--text-light);
+        box-shadow: 0 0 10px var(--orange);
+      }
+
+      button {
+        background: var(--orange);
+        border: none;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      button:hover {
+        background: darkorange;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .error {
+        color: #ffcc00;
+        font-size: 14px;
+        margin-top: 12px;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 480px) {
+        .login-container {
+          width: 90%;
+          padding: 25px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Background Animated Lines -->
+    <div class="line line1"></div>
+    <div class="line line2"></div>
+    <div class="line line3"></div>
+    <div class="line line4"></div>
+
+    <!-- Login Container -->
+    <div class="login-container">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" />
+      <h2>Dean Login</h2>
+      <form method="POST">
+        <div class="form-group">
+          <input type="email" name="email" placeholder="Enter Email" required />
+        </div>
+        <div class="form-group">
+          <input
+            type="password"
+            name="password"
+            placeholder="Enter Password"
+            required
+          />
+        </div>
+        <button type="submit">Login</button>
+      </form>
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% endif %}
+    </div>
+  </body>
+</html>

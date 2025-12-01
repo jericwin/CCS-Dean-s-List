@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Feedback | CCS Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link rel="shortcut icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+
+<style>
+:root {
+    --charcoal-gray: #36454F;
+    --dark-gray: #121212; 
+    --maroon: #6A1B1B;
+    --orange: #FF7A1A;
+    --dark-bg: #1E1B1B;
+    --light-bg: #2A2323;
+    --text-light: #F1E9E6;
+    --text-muted: #B8AFAF;
+}
+
+/* Reset */
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family:'Inter', sans-serif;
+    background: var(--dark-bg);
+    color: var(--text-light);
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    width:260px;
+    background: var(--dark-gray); 
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:20px 0;
+    position:fixed;
+    top:0; left:0; bottom:0;
+}
+.sidebar h2 {
+    text-align:center;
+    font-weight:700;
+    font-size:22px;
+    color:white;
+    margin-bottom:30px;
+}
+.nav-links {
+    flex:1;
+}
+.nav-links a {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:#fff;
+    padding:14px 22px;
+    margin:8px 15px;
+    text-decoration:none;
+    font-weight:500;
+    border-radius:10px;
+    transition: all 0.3s ease;
+}
+.nav-links a i { font-size:18px; }
+.nav-links a:hover {
+    background: var(--orange);
+    color:white;
+}
+.user-menu {
+    padding:15px;
+    text-align:center;
+}
+.user-box {
+    background: var(--light-bg);
+    padding:12px;
+    border-radius:12px;
+    color:white;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+}
+.user-box i { font-size:20px; }
+.dropdown {
+    display:none;
+    margin-top:10px;
+    background: var(--light-bg);
+    border-radius:10px;
+    overflow:hidden;
+}
+.dropdown a {
+    display:block;
+    padding:10px;
+    color: var(--text-light);
+    text-decoration:none;
+    transition:0.3s;
+}
+.dropdown a:hover { background: var(--orange); color:white; }
+
+/* Main Content */
+.main {
+    margin-left:260px;
+    flex:1;
+    padding:30px;
+    overflow-y:auto;
+}
+.main-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+}
+.main-header h2 {
+    font-size:24px;
+    color: var(--orange);
+}
+form {
+    background: var(--light-bg);
+    padding:25px;
+    border-radius:16px;
+    margin-bottom:30px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.4);
+}
+form label {
+    font-weight:600;
+    margin:12px 0 6px;
+    display:block;
+}
+form select, form textarea {
+    width:100%;
+    padding:14px;
+    border-radius:10px;
+    border:none;
+    background:#3A3030;
+    color: var(--text-light);
+    font-size:15px;
+    margin-bottom:16px;
+}
+form textarea { resize:vertical; }
+button {
+    background: var(--orange);
+    border:none;
+    padding:12px 22px;
+    border-radius:12px;
+    color:white;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+button:hover { background:#e56c00; }
+
+/* Toggle */
+.switch {
+    position: relative;
+    display: inline-block;
+    width:50px; height:26px;
+    margin-left:10px;
+}
+.switch input { display:none; }
+.slider {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:#555; border-radius:50px; cursor:pointer;
+    transition:0.4s;
+}
+.slider:before {
+    position:absolute; content:"";
+    height:20px; width:20px; left:3px; bottom:3px;
+    background:white; border-radius:50%;
+    transition:0.4s;
+}
+input:checked + .slider { background: var(--orange); }
+input:checked + .slider:before { transform:translateX(24px); }
+
+/* Feedback cards */
+.feedback-list { display:grid; gap:20px; }
+.feedback-card {
+    background: var(--light-bg);
+    padding:20px;
+    border-radius:16px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.4);
+}
+.feedback-card strong { color: var(--orange); }
+.feedback-card small {
+    display:block;
+    margin-top:10px;
+    font-size:13px;
+    color: var(--text-muted);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width:8px; }
+::-webkit-scrollbar-track { background: #2A2323; }
+::-webkit-scrollbar-thumb { background: var(--orange); border-radius:10px; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div>
+        <h2>🐦‍🔥 CCS Portal</h2>
+        <div class="nav-links">
+    <a href="{{ url_for('student_module') }}"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="{{ url_for('student_announcements') }}"><i class="fas fa-bullhorn"></i> Announcements</a>
+            <a href="{{ url_for('student_notifications') }}"><i class="fas fa-bell"></i> Notifications</a>
+            <a href="{{ url_for('student_chat') }}"><i class="fas fa-headset"></i> Chat Support</a>
+            <a href="{{ url_for('student_deans_list') }}"><i class="fas fa-award"></i> Dean’s List</a>
+            <a href="{{ url_for('student_feedback') }}"><i class="fas fa-comment-dots"></i> Feedback</a>
+</div>
+
+    </div>
+    <div class="user-menu">
+    <div class="user-box" id="userBox">
+        <i class="fas fa-user-circle"></i> <span>{{ first_name }}</span>
+    </div>
+    <div class="dropdown" id="dropdownMenu">
+        <!-- Settings link without any checks -->
+        <a href="{{ url_for('student_settings') }}">Settings</a>
+        <!-- Logout link (optional) -->
+        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+    <div class="main-header">
+        <h2>Submit Feedback</h2>
+    </div>
+
+    <form method="POST">
+        <label>Position</label>
+        <select name="position" required>
+            <option value="President">President</option>
+            <option value="VP">Vice President</option>
+            <option value="Secretary">Secretary</option>
+            <option value="Whole Organization">Whole Organization</option>
+        </select>
+
+        <label>Feedback</label>
+        <textarea name="feedback" rows="4" placeholder="Your feedback here..." required></textarea>
+
+        <label>Submit Anonymously</label>
+        <label class="switch">
+            <input type="checkbox" name="anonymous">
+            <span class="slider"></span>
+        </label>
+        <br><br>
+        <button type="submit"><i class="fas fa-paper-plane"></i> Submit</button>
+    </form>
+
+    <h2 style="margin-bottom:15px;">Past Feedbacks</h2>
+    <div class="feedback-list">
+        {% for f in feedbacks %}
+        <div class="feedback-card">
+            <strong>{{ f.position }}</strong> - {% if f.anonymous %}Anonymous{% else %}You{% endif %}<br>
+            <p>{{ f.feedback }}</p>
+            {% if f.admin_reply %}
+                <small><i class="fas fa-reply"></i> Admin Reply: {{ f.admin_reply }}</small>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+const userBox = document.getElementById('userBox');
+const dropdownMenu = document.getElementById('dropdownMenu');
+userBox.onclick = () => dropdownMenu.style.display = dropdownMenu.style.display === "block" ? "none" : "block";
+window.onclick = e => { if(!userBox.contains(e.target)){ dropdownMenu.style.display = "none"; } }
+</script>
+</body>
+</html>

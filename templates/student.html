@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>College of Computer Studies | CCS Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link rel="shortcut icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+
+<style>
+:root {
+    --maroon: #6A1B1B;
+    --dark-gray: #121212;
+    --orange: #FF7A1A;
+    --dark-bg: #1E1B1B;
+    --light-bg: #2A2323;
+    --text-light: #F1E9E6;
+    --text-muted: #B8AFAF;
+    --card-bg: #3A2A2A;
+}
+
+/* Reset */
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family:'Inter', sans-serif;
+    display:flex;
+    min-height:100vh;
+    background: var(--dark-bg);
+    color: var(--text-light);
+    overflow-y: auto;
+}
+
+/* Sidebar */
+.sidebar {
+    width:260px;
+    background: var(--dark-gray);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:20px 0;
+    position:fixed;
+    top:0; left:0; bottom:0;
+    overflow-y:auto;
+}
+.sidebar h2 {
+    text-align:center;
+    font-weight:700;
+    font-size:22px;
+    color:white;
+    margin-bottom:30px;
+}
+.nav-links {
+    flex:1;
+}
+.nav-links a {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:#fff;
+    padding:14px 22px;
+    margin:8px 15px;
+    text-decoration:none;
+    font-weight:500;
+    border-radius:10px;
+    transition: all 0.3s ease;
+    position:relative;
+}
+.nav-links a i { font-size:18px; }
+.nav-links a:hover {
+    background: var(--orange);
+    color:white;
+}
+
+/* User dropdown */
+.user-menu {
+    padding:15px;
+    text-align:center;
+}
+.user-box {
+    background: var(--light-bg);
+    padding:12px;
+    border-radius:12px;
+    color:white;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+}
+.user-box i { font-size:20px; }
+.dropdown {
+    display:none;
+    margin-top:10px;
+    background: var(--light-bg);
+    border-radius:10px;
+    overflow:hidden;
+}
+.dropdown a {
+    display:block;
+    padding:10px;
+    color: var(--text-light);
+    text-decoration:none;
+    transition:0.3s;
+}
+.dropdown a:hover { background: var(--orange); color:white; }
+
+/* Content */
+.content {
+    margin-left:260px;
+    padding:40px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:50px;
+}
+
+/* Landing Header / Hero Section */
+.landing-header {
+    text-align:center;
+    padding-bottom:40px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+.landing-header img {
+    width:140px;
+    max-width:100%;
+    margin-bottom:20px;
+}
+.landing-header h1 {
+    font-size:36px;
+    font-weight:700;
+    color: var(--orange);
+    margin-bottom:15px;
+}
+.landing-header p {
+    font-size:16px;
+    color: var(--text-light);
+    max-width:800px;
+    margin:0 auto 25px;
+    line-height:1.6;
+}
+.landing-header .btn-start {
+    background: var(--orange);
+    color:white;
+    border:none;
+    padding:16px 32px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    transition:0.3s;
+    font-size:16px;
+    text-decoration:none;
+}
+.landing-header .btn-start:hover { background:#e06513; }
+
+/* Courses Cards */
+.courses-section {
+    text-align:center;
+}
+.courses-section h2 {
+    color: var(--orange);
+    font-size:32px;
+    margin-bottom:35px;
+}
+.courses {
+    display:flex;
+    gap:30px;
+    flex-wrap:wrap;
+    justify-content:center;
+}
+.course-card {
+    background: var(--card-bg);
+    padding:25px 20px;
+    border-radius:16px;
+    width:280px;
+    text-align:center;
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.course-card i {
+    font-size:38px;
+    color: var(--orange);
+    margin-bottom:15px;
+}
+.course-card h3 {
+    font-size:18px;
+    margin-bottom:12px;
+}
+.course-card p {
+    font-size:14px;
+    color: var(--text-muted);
+    line-height:1.6;
+}
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow:0 10px 25px rgba(0,0,0,0.6);
+}
+
+/* Highlights Section */
+.highlights {
+    display:flex;
+    flex-wrap:wrap;
+    gap:25px;
+    justify-content:center;
+    margin-top:20px;
+}
+.highlight-card {
+    background: var(--card-bg);
+    padding:25px 20px;
+    border-radius:16px;
+    width:260px;
+    text-align:center;
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.highlight-card i {
+    font-size:36px;
+    color: var(--orange);
+    margin-bottom:12px;
+}
+.highlight-card h4 {
+    font-size:16px;
+    margin-bottom:10px;
+    font-weight:600;
+}
+.highlight-card p {
+    font-size:14px;
+    color: var(--text-muted);
+    line-height:1.5;
+}
+.highlight-card:hover {
+    transform: translateY(-5px);
+    box-shadow:0 10px 25px rgba(0,0,0,0.6);
+}
+
+/* Footer */
+.footer {
+    text-align:center;
+    padding:25px;
+    background: var(--maroon);
+    color: var(--text-light);
+    font-size:14px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width:8px; }
+::-webkit-scrollbar-track { background: var(--light-bg); }
+::-webkit-scrollbar-thumb { background: var(--orange); border-radius:10px; }
+
+/* Responsive */
+@media screen and (max-width:768px){
+    .sidebar { width:200px; }
+    .content { margin-left:200px; padding:20px; }
+    .courses, .highlights { flex-direction: column; align-items:center; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div>
+        <h2>🐦‍🔥 CCS Portal</h2>
+        <div class="nav-links">
+            <a href="{{ url_for('student_module') }}"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="{{ url_for('student_announcements') }}"><i class="fas fa-bullhorn"></i> Announcements</a>
+            <a href="{{ url_for('student_notifications') }}"><i class="fas fa-bell"></i> Notifications</a>
+            <a href="{{ url_for('student_chat') }}"><i class="fas fa-headset"></i> Chat Support</a>
+            <a href="{{ url_for('student_deans_list') }}"><i class="fas fa-award"></i> Dean’s List</a>
+            <a href="{{ url_for('student_feedback') }}"><i class="fas fa-comment-dots"></i> Feedback</a>
+        </div>
+    </div>
+    <div class="user-menu">
+    <div class="user-box" id="userBox">
+        <i class="fas fa-user-circle"></i> <span>{{ first_name }}</span>
+    </div>
+    <div class="dropdown" id="dropdownMenu">
+        <!-- Settings link without any checks -->
+        <a href="{{ url_for('student_settings') }}">Settings</a>
+        <!-- Logout link (optional) -->
+        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</div>
+
+
+</div>
+
+<!-- Main Content -->
+<div class="content">
+
+    <!-- Landing Header -->
+    <div class="landing-header">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="CCS Logo">
+        <h1>Welcome to the College of Computer Studies</h1>
+        <p>The College of Computer Studies (CCS) provides world-class education in Information Technology, Computer Science, and Information Systems. Our programs focus on innovation, practical skills, and ethical computing to prepare students for leadership in the tech industry.</p>
+    </div>
+
+    <!-- Courses Section -->
+    <div class="courses-section">
+        <h2>Our Programs</h2>
+        <div class="courses">
+            <div class="course-card">
+                <i class="fas fa-laptop-code"></i>
+                <h3>Bachelor of Science in Information Technology</h3>
+                <p>Learn software development, networking, animation, and IT management skills to tackle real-world tech challenges.</p>
+            </div>
+            <div class="course-card">
+                <i class="fas fa-desktop"></i>
+                <h3>Bachelor of Science in Computer Science</h3>
+                <p>Master algorithms, programming languages, AI, and software engineering principles to innovate and solve complex problems.</p>
+            </div>
+            <div class="course-card">
+                <i class="fas fa-server"></i>
+                <h3>Bachelor of Science in Information Systems</h3>
+                <p>Combine business knowledge and technology to design and manage enterprise systems effectively and efficiently.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Highlights Section -->
+    <div class="courses-section">
+        <h2>Why Choose CCS?</h2>
+        <div class="highlights">
+            <div class="highlight-card">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <h4>Expert Faculty</h4>
+                <p>Learn from experienced instructors who combine academic excellence with real-world industry knowledge.</p>
+            </div>
+            
+            <div class="highlight-card">
+                <i class="fas fa-user-graduate"></i>
+                <h4>Career-Focused</h4>
+                <p>Gain career guidance, internships, and projects that prepare you for success in the tech industry.</p>
+            </div>
+            <div class="highlight-card">
+                <i class="fas fa-award"></i>
+                <h4>Recognized Programs</h4>
+                <p>All programs are designed to meet industry standards and recognized for academic excellence.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        &copy; {{ current_year }} College of Computer Studies
+    </div>
+
+</div>
+
+<script>
+const userBox = document.getElementById('userBox');
+const dropdownMenu = document.getElementById('dropdownMenu');
+userBox.onclick = () => dropdownMenu.style.display = dropdownMenu.style.display === "block" ? "none" : "block";
+window.onclick = e => { if(!userBox.contains(e.target)) dropdownMenu.style.display = "none"; };
+</script>
+
+</body>
+</html>

@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='logo.png') }}"
+      type="image/png"
+    />
+    <title>Admin - Announcements</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary: #ff7a1a;
+        --primary-hover: #e06b17;
+        --secondary: #7b1f1f;
+        --bg-dark: #121212;
+        --bg-card: #1e1e1e;
+        --text-main: #e0e0e0;
+        --text-muted: #a0a0a0;
+        --border-color: #333;
+        --sidebar-width: 260px;
+        --transition: all 0.3s ease;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-dark);
+        color: var(--text-main);
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar & Navigation */
+      .sidebar {
+        width: var(--sidebar-width);
+        background-color: var(--bg-card);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        padding: 2rem 1.5rem;
+        position: fixed;
+        height: 100vh;
+        z-index: 100;
+      }
+
+      .sidebar-header {
+        margin-bottom: 3rem;
+        text-align: center;
+      }
+
+      .sidebar-header h2 {
+        color: var(--primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.8rem 1rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: var(--transition);
+        font-weight: 500;
+      }
+
+      .nav-link:hover,
+      .nav-link.active {
+        background-color: rgba(255, 122, 26, 0.1);
+        color: var(--primary);
+      }
+
+      .nav-link i {
+        width: 20px;
+        text-align: center;
+      }
+
+      .user-menu {
+        margin-top: auto;
+        position: relative;
+      }
+
+      .user-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.8rem 1rem;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-main);
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .user-btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        bottom: 110%;
+        left: 0;
+        width: 100%;
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.5rem;
+        display: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .dropdown-menu.show {
+        display: block;
+        animation: slideUp 0.2s ease;
+      }
+
+      .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.8rem 1rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 6px;
+        transition: var(--transition);
+      }
+
+      .dropdown-item:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: var(--text-main);
+      }
+
+      .dropdown-item.danger {
+        color: #ff4d4d;
+      }
+
+      .dropdown-item.danger:hover {
+        background-color: rgba(255, 77, 77, 0.1);
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Content Area */
+      .content {
+        margin-left: var(--sidebar-width);
+        padding: 2rem;
+        flex: 1;
+        max-width: 1600px;
+        animation: fadeIn 0.5s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+
+      .page-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-main);
+      }
+
+      .page-title span {
+        color: var(--primary);
+      }
+
+      /* Create Announcement Card */
+      .create-card {
+        background-color: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        margin-bottom: 3rem;
+      }
+
+      .create-card h3 {
+        margin-bottom: 1.5rem;
+        color: var(--text-main);
+        font-size: 1.2rem;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      input[type="text"],
+      textarea {
+        background-color: var(--bg-dark);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        padding: 0.8rem 1rem;
+        border-radius: 8px;
+        font-family: inherit;
+        transition: var(--transition);
+        width: 100%;
+      }
+
+      input[type="text"]:focus,
+      textarea:focus {
+        border-color: var(--primary);
+        outline: none;
+      }
+
+      /* File Input Styling */
+      input[type="file"] {
+        background-color: var(--bg-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.5rem;
+        color: var(--text-muted);
+        width: 100%;
+      }
+
+      input[type="file"]::-webkit-file-upload-button {
+        background-color: var(--bg-card);
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-right: 1rem;
+        transition: var(--transition);
+      }
+
+      input[type="file"]::-webkit-file-upload-button:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .btn-primary {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        align-self: flex-start;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--primary-hover);
+      }
+
+      #preview {
+        max-width: 200px;
+        border-radius: 8px;
+        display: none;
+        margin-top: 1rem;
+        border: 1px solid var(--border-color);
+      }
+
+      /* Announcements Grid */
+      .section-title {
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-main);
+        border-left: 4px solid var(--primary);
+        padding-left: 1rem;
+      }
+
+      .announcements-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .announcement-card {
+        background-color: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .announcement-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+
+      .card-header {
+        padding: 1.2rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin-right: 1rem;
+      }
+
+      .card-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .action-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.4rem;
+        border-radius: 4px;
+        transition: var(--transition);
+      }
+
+      .action-btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-main);
+      }
+
+      .action-btn.delete:hover {
+        background-color: rgba(255, 77, 77, 0.1);
+        color: #ff4d4d;
+      }
+
+      .card-body {
+        padding: 1.2rem;
+        flex: 1;
+      }
+
+      .card-text {
+        color: var(--text-muted);
+        line-height: 1.6;
+        font-size: 0.95rem;
+        white-space: pre-wrap;
+      }
+
+      .card-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-top: 1rem;
+        border: 1px solid var(--border-color);
+      }
+
+      .card-footer {
+        padding: 1rem 1.2rem;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      .footer-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      /* Modals */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-content {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 2rem;
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+        animation: modalSlide 0.3s ease;
+      }
+
+      @keyframes modalSlide {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .modal-header {
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-title {
+        font-size: 1.3rem;
+        color: var(--text-main);
+      }
+
+      .close-modal {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.5rem;
+        cursor: pointer;
+      }
+
+      .modal-footer {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+      }
+
+      .btn-secondary {
+        background-color: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .btn-secondary:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+
+      /* Notification */
+      #notif {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: var(--primary);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transform: translateY(-100px);
+        transition: transform 0.3s ease;
+        z-index: 2000;
+      }
+
+      #notif.show {
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>ADMIN PANEL</h2>
+      </div>
+      <div class="nav-links">
+        <a href="{{ url_for('admin_dashboard') }}" class="nav-link">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('admin_announcements') }}" class="nav-link active">
+          <i class="fas fa-bullhorn"></i>
+          <span>Announcements</span>
+        </a>
+        <a
+          href="{{ url_for('admin_deans_list_applications') }}"
+          class="nav-link"
+        >
+          <i class="fas fa-award"></i>
+          <span>Dean's List</span>
+        </a>
+        <a href="{{ url_for('admin_chat') }}" class="nav-link">
+          <i class="fas fa-comments"></i>
+          <span>Chat Support</span>
+        </a>
+        <a href="{{ url_for('admin_feedback') }}" class="nav-link">
+          <i class="fas fa-comment-dots"></i>
+          <span>Feedback</span>
+        </a>
+        <a href="{{ url_for('admin_ranking') }}" class="nav-link">
+          <i class="fas fa-trophy"></i>
+          <span>Ranking</span>
+        </a>
+      </div>
+      <div class="user-menu">
+        <div class="user-btn" onclick="toggleUserMenu()">
+          <div class="user-info">
+            <i class="fas fa-user-circle"></i>
+            <span>Admin</span>
+          </div>
+          <i class="fas fa-chevron-up"></i>
+        </div>
+        <div class="dropdown-menu" id="userDropdown">
+          <a href="{{ url_for('admin_settings') }}" class="dropdown-item">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+          </a>
+          <a href="{{ url_for('admin_logout') }}" class="dropdown-item danger">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function toggleUserMenu() {
+        const menu = document.getElementById("userDropdown");
+        menu.classList.toggle("show");
+      }
+
+      // Close dropdown when clicking outside
+      window.addEventListener("click", function (e) {
+        const userBtn = document.querySelector(".user-btn");
+        const menu = document.getElementById("userDropdown");
+
+        if (!userBtn.contains(e.target) && !menu.contains(e.target)) {
+          menu.classList.remove("show");
+        }
+      });
+    </script>
+
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">Manage <span>Announcements</span></h1>
+      </div>
+
+      <!-- Create Announcement Form -->
+      <div class="create-card">
+        <h3>Create New Announcement</h3>
+        <form method="POST" enctype="multipart/form-data" id="announcementForm">
+          <input
+            type="text"
+            name="title"
+            placeholder="Announcement Title"
+            required
+          />
+          <textarea
+            name="body"
+            placeholder="Write your announcement content here..."
+            rows="4"
+            required
+          ></textarea>
+          <div class="file-input-wrapper">
+            <input type="file" name="image" id="imageInput" accept="image/*" />
+          </div>
+          <img id="preview" alt="Image Preview" />
+          <button type="submit" class="btn-primary">Post Announcement</button>
+        </form>
+      </div>
+
+      <!-- Existing Announcements -->
+      <h2 class="section-title">Existing Announcements</h2>
+      <div class="announcements-grid">
+        {% for ann in announcements %}
+        <div class="announcement-card" data-id="{{ ann.id }}">
+          <div class="card-header">
+            <div class="card-title">{{ ann.title }}</div>
+            <div class="card-actions">
+              <button class="action-btn edit-btn" title="Edit">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="action-btn delete delete-btn" title="Delete">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">{{ ann.body }}</p>
+            {% if ann.image_path %}
+            <img
+              src="{{ url_for('static', filename=ann.image_path.split('static/')[-1]) }}"
+              alt="Announcement Image"
+              class="card-image"
+            />
+            {% endif %}
+          </div>
+          <div class="card-footer">
+            <div class="footer-item">
+              <i class="fas fa-calendar-alt"></i>
+              <span>{{ ann.created_at }}</span>
+            </div>
+            <div class="footer-item">
+              <i class="fas fa-user-circle"></i>
+              <span>Admin</span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Edit Modal -->
+      <div id="editModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title">Edit Announcement</h2>
+            <button class="close-modal close">&times;</button>
+          </div>
+          <form id="editForm" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="ann_id" id="editAnnId" />
+            <input
+              type="text"
+              name="title"
+              id="editTitle"
+              placeholder="Title"
+              required
+            />
+            <textarea
+              name="body"
+              id="editBody"
+              placeholder="Body"
+              rows="4"
+              required
+            ></textarea>
+            <div class="file-input-wrapper">
+              <input type="file" name="image" id="editImage" accept="image/*" />
+            </div>
+            <img
+              id="editPreview"
+              alt="Edit Image Preview"
+              style="
+                max-width: 100%;
+                margin-top: 10px;
+                border-radius: 8px;
+                display: none;
+              "
+            />
+            <div class="modal-footer">
+              <button type="button" class="btn-secondary cancel-btn">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Delete Confirmation Modal -->
+      <div id="deleteConfirmationModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title">Confirm Deletion</h2>
+            <button class="close-modal close">&times;</button>
+          </div>
+          <p style="color: var(--text-muted); margin-bottom: 1rem">
+            Are you sure you want to delete this announcement? This action
+            cannot be undone.
+          </p>
+          <div class="modal-footer">
+            <button
+              id="cancelDelete"
+              type="button"
+              class="btn-secondary cancel-btn"
+            >
+              Cancel
+            </button>
+            <button
+              id="confirmDelete"
+              type="button"
+              class="btn-primary"
+              style="background-color: #ff4d4d"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notif">Announcement posted successfully!</div>
+
+    <script>
+      window.addEventListener("load", () => {
+        // Ensure modals are hidden on page load
+        const editModal = document.getElementById("editModal");
+        const deleteModal = document.getElementById("deleteConfirmationModal");
+
+        editModal.style.display = "none"; // Hide edit modal on load
+        deleteModal.style.display = "none"; // Hide delete confirmation modal on load
+      });
+
+      // Live image preview for new announcement
+      document
+        .getElementById("imageInput")
+        .addEventListener("change", function () {
+          const file = this.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              const preview = document.getElementById("preview");
+              preview.src = e.target.result;
+              preview.style.display = "block"; // Show preview
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+      // Edit modal image preview functionality
+      const editPreview = document.getElementById("editPreview");
+      document
+        .getElementById("editImage")
+        .addEventListener("change", function () {
+          const file = this.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              editPreview.src = e.target.result;
+              editPreview.style.display = "block"; // Show preview
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+      // Handling existing image preview in edit modal
+      document.querySelectorAll(".edit-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest(".announcement-card");
+          const annId = card.dataset.id; // safer than Flask variable in JS
+          const title = card.querySelector(".card-title").innerText;
+          const body = card.querySelector(".card-text").innerText;
+          const img = card.querySelector(".card-image");
+
+          // Set values in the edit modal
+          document.getElementById("editAnnId").value = annId;
+          document.getElementById("editTitle").value = title;
+          document.getElementById("editBody").value = body;
+
+          // Show the existing image in the edit modal if available
+          if (img) {
+            editPreview.src = img.src;
+            editPreview.style.display = "block"; // Show preview of the existing image
+          } else {
+            editPreview.style.display = "none"; // Hide preview if no image exists
+          }
+
+          // Show the modal for editing
+          document.getElementById("editModal").style.display = "flex";
+        });
+      });
+
+      // Close the modal when clicking on the close button or cancel button
+      document.querySelectorAll(".close, .cancel-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.getElementById("editModal").style.display = "none";
+          document.getElementById("deleteConfirmationModal").style.display =
+            "none";
+        });
+      });
+
+      // Close the modal when clicking outside of the modal
+      window.onclick = (e) => {
+        const editModal = document.getElementById("editModal");
+        const deleteModal = document.getElementById("deleteConfirmationModal");
+        if (e.target === editModal) {
+          editModal.style.display = "none";
+        }
+        if (e.target === deleteModal) {
+          deleteModal.style.display = "none";
+        }
+      };
+
+      // Handling submit of the edit form
+      const editForm = document.getElementById("editForm");
+      editForm.addEventListener("submit", (e) => {
+        e.preventDefault(); // Prevent the default form submission
+
+        const annId = document.getElementById("editAnnId").value;
+        const formData = new FormData(editForm);
+
+        fetch(`/admin/edit_announcement/${annId}`, {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.message) {
+              // Show success notification
+              const notif = document.getElementById("notif");
+              notif.innerText = data.message;
+              notif.classList.add("show");
+
+              // Close the modal
+              document.getElementById("editModal").style.display = "none";
+
+              // Reload the page after a short delay to show the update
+              setTimeout(() => {
+                window.location.reload();
+              }, 1000);
+            } else if (data.error) {
+              alert("Error: " + data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("There was an error updating the announcement.");
+          });
+      });
+
+      // Delete confirmation modal
+      const deleteModal = document.getElementById("deleteConfirmationModal");
+      const confirmDeleteBtn = document.getElementById("confirmDelete");
+
+      // Delete functionality with custom modal and AJAX
+      document.querySelectorAll(".delete-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest(".announcement-card");
+          const annId = card.dataset.id;
+
+          // Show the confirmation modal
+          deleteModal.style.display = "flex";
+
+          // Confirm delete action
+          confirmDeleteBtn.onclick = () => {
+            // Perform AJAX DELETE request
+            fetch(`/admin/delete_announcement/${annId}`, {
+              method: "DELETE",
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.message) {
+                  // Show success message
+                  const notif = document.getElementById("notif");
+                  notif.innerText = data.message;
+                  notif.classList.add("show");
+                  setTimeout(() => notif.classList.remove("show"), 2000);
+
+                  card.remove(); // Remove the announcement card from the DOM
+                } else if (data.error) {
+                  alert("Error: " + data.error); // Show error message
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert("There was an error deleting the announcement.");
+              });
+
+            // Close the modal after the deletion
+            deleteModal.style.display = "none";
+          };
+        });
+      });
+    </script>
+  </body>
+</html>
