@@ -13,9 +13,6 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 from functools import wraps
 from werkzeug.security import generate_password_hash
 
-
-
-
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # change in production
 
@@ -193,7 +190,7 @@ def login():
             session["role"] = "student"  # explicitly set role
             session["full_name"] = user["fullname"]  # Store the full name (first + last)
 
-            flash(f"Welcome back, {user['fullname']}!", "success")
+             #flash(f"Welcome back, {user['fullname']}!", "success")
             return redirect(url_for("student_module"))
         else:
             flash("Invalid email or password. Please try again.", "danger")
@@ -617,7 +614,6 @@ def student_deans_list():
         return redirect(url_for("login"))
 
     try:
-        # Get database connection
         conn = get_db()
         if not conn:
             return "Database connection error", 500
@@ -625,76 +621,74 @@ def student_deans_list():
         cursor = conn.cursor(dictionary=True)
 
         if request.method == "POST":
+
             # Get uploaded files
             cog_file = request.files.get("cog")
             coe_file = request.files.get("coe")
 
-            # Get form data
+            # Get form inputs
             course = request.form.get("course")
             gwa = request.form.get("gwa")
-            academic_year = request.form.get("academic_year")  # new
-            semester = request.form.get("semester")            # new
+            academic_year = request.form.get("academic_year")
+            semester = request.form.get("semester")
+
+            # Get full name from session
+            full_name = session.get("full_name")
+            if not full_name:
+                flash("Full name missing from session.", "danger")
+                return redirect(url_for("student_deans_list"))
+
+            # 🔍 ---------------- DUPLICATE CHECK ----------------
+            cursor.execute("""
+                SELECT id FROM deans_list_applications
+                WHERE full_name=%s AND academic_year=%s AND semester=%s
+            """, (full_name, academic_year, semester))
+
+            existing = cursor.fetchone()
+
+            if existing:
+                flash("You already submitted an application for this academic year and semester.", "warning")
+                return redirect(url_for("student_deans_list"))
+            # ----------------------------------------------------
+
+            # Prepare upload directory
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
             cog_filename = coe_filename = None
 
-            # Ensure upload folder exists
-            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-            # Save COG file (Certificate of Grade)
+            # Save COG file
             if cog_file and allowed_file(cog_file.filename):
                 cog_filename = secure_filename(cog_file.filename)
                 cog_file.save(os.path.join(app.config['UPLOAD_FOLDER'], cog_filename))
-                print(f"COG file saved to {os.path.join(app.config['UPLOAD_FOLDER'], cog_filename)}")
-            else:
-                print("No COG file uploaded or invalid file format.")
 
-            # Save COE file (Certificate of Enrollment)
+            # Save COE file
             if coe_file and allowed_file(coe_file.filename):
                 coe_filename = secure_filename(coe_file.filename)
                 coe_file.save(os.path.join(app.config['UPLOAD_FOLDER'], coe_filename))
-                print(f"COE file saved to {os.path.join(app.config['UPLOAD_FOLDER'], coe_filename)}")
-            else:
-                print("No COE file uploaded or invalid file format.")
 
-            # Get student's full name from session
-            full_name = session.get("full_name")
-            if not full_name:
-                print("Error: Full name not found in session.")
-                flash("Full name is missing from session.")
-                return redirect(url_for("student_deans_list"))
-
-            print(f"Full name from session: {full_name}")
-
-            # Insert data into database
+            # Insert into database
             try:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     INSERT INTO deans_list_applications
                     (full_name, course, gwa, academic_year, semester, cog_filename, coe_filename)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    """,
-                    (full_name, course, gwa, academic_year, semester, cog_filename, coe_filename)
-                )
+                """, (full_name, course, gwa, academic_year, semester, cog_filename, coe_filename))
+                
                 conn.commit()
-                print("Data saved to database!")
                 flash("Your application has been submitted successfully!", "success")
+
             except mysql.connector.Error as e:
-                print(f"Error saving to database: {e}")
-                flash(f"Error saving to database: {e}", "danger")
+                flash(f"Database error: {e}", "danger")
                 return f"Error: {e}", 500
 
             return redirect(url_for("student_deans_list"))
 
-        # Fetch all previous applications
-        cursor.execute(
-            "SELECT * FROM deans_list_applications ORDER BY created_at DESC"
-        )
+        # If GET method → show user's submissions
+        cursor.execute("SELECT * FROM deans_list_applications ORDER BY created_at DESC")
         applications = cursor.fetchall()
 
-        # Close database connections
         cursor.close()
         conn.close()
 
-        # Pass first_name to template for sidebar
         first_name = session.get("first_name", "Student")
         return render_template(
             "student_deans_list.html",
@@ -703,7 +697,6 @@ def student_deans_list():
         )
 
     except Exception as e:
-        print(f"An error occurred: {e}")
         return f"Error: {e}", 500
 
 
@@ -783,7 +776,7 @@ def admin_deans_list_applications():
 
                 # Send notification if student exists
                 if student_id:
-                    notification_message = f"Your application status has been updated to {status}. Comment: {comment}"
+                    notification_message = f"Your application status has been updated to {status}. \nRemarks: {comment}"
                     cursor.execute(
                         "INSERT INTO student_notification (student_id, message, status) VALUES (%s, %s, %s)",
                         (student_id, notification_message, status)
@@ -932,54 +925,59 @@ def admin_ranking():
                 download_name="ranking.xlsx"
             )
 
-        # -------- EXPORT TO PDF --------
+ # -------- EXPORT TO PDF (Using user's DL.docx template) --------
         elif request.args.get("export") == "pdf" and applications:
-            pdf_filename = "ranking.pdf"
-            buffer = BytesIO()
-            c = canvas.Canvas(buffer, pagesize=letter)
-            c.setFont("Helvetica", 10)
+            from docx import Document
+            from docx2pdf import convert
+            import uuid, os, pythoncom
 
-            # Title
-            c.drawString(200, 770, "Dean's List Rankings")
-            c.drawString(200, 750, f"Status: {status_filter} - Program: {program_filter} - Academic Year: {academic_year_filter} - Semester: {semester_filter}")
+            template_path = "DL.docx"
+            doc = Document(template_path)
 
-            # Headers
-            headers = ["Rank", "Full Name", "Program", "Section", "Academic Year", "Semester", "GWA", "Status"]
-            x_positions = [30, 70, 200, 280, 350, 430, 500, 550]
-            for i, header in enumerate(headers):
-                c.drawString(x_positions[i], 720, header)
+            # Use the first (and only) table in DL.docx
+            table = doc.tables[0]
 
-            # Data
-            y_position = 700
+            # Append rows under the header
             for idx, app in enumerate(applications, start=1):
-                row = [
-                    idx,
-                    app['full_name'],
-                    app['program'],
-                    app['section'],
-                    app['academic_year'],
-                    app['semester'],
-                    app['gwa'],
-                    app['status']
-                ]
-                for i, value in enumerate(row):
-                    c.drawString(x_positions[i], y_position, str(value))
-                y_position -= 20
-                if y_position < 50:  # Add new page if needed
-                    c.showPage()
-                    c.setFont("Helvetica", 10)
-                    y_position = 750
 
-            c.showPage()
-            c.save()
-            buffer.seek(0)
+                row = table.add_row().cells
+                row[0].text = str(idx)
+                row[1].text = app.get('full_name', "") or ""
+                row[2].text = app.get('program', "") or ""
+                row[3].text = app.get('section', "") or ""
+                row[4].text = app.get('academic_year', "") or ""
+                row[5].text = app.get('semester', "") or ""
+                row[6].text = str(app.get('gwa', "")) or ""
+                row[7].text = app.get('status', "") or ""
+
+            # Save a temporary DOCX
+            temp_docx = f"temp_{uuid.uuid4()}.docx"
+            temp_pdf = f"temp_{uuid.uuid4()}.pdf"
+            doc.save(temp_docx)
+
+            # Initialize COM for this Flask thread
+            pythoncom.CoInitialize()
+
+            # Convert DOCX → PDF
+            convert(temp_docx, temp_pdf)
+
+            pythoncom.CoUninitialize()
+
+            # Send PDF to browser
+            with open(temp_pdf, "rb") as f:
+                pdf_bytes = f.read()
+
+            os.remove(temp_docx)
+            os.remove(temp_pdf)
 
             return send_file(
-                buffer,
+                BytesIO(pdf_bytes),
                 mimetype="application/pdf",
                 as_attachment=True,
-                download_name=pdf_filename
+                download_name="Deans_List.pdf"
             )
+
+
 
         # Close connection
         cursor.close()
@@ -1087,10 +1085,46 @@ def student_module():
     if session.get("role") != "student":
         flash("⚠️ Unauthorized access.", "danger")
         return redirect(url_for("login"))
-    
-    # Pass the correct variable name to match your HTML template
-    first_name = session.get("first_name", "Student")  # fallback if not set
-    return render_template("student.html", first_name=session.get("first_name", "Student"))
+
+    try:
+        conn = get_db()
+        if not conn:
+            return "Database connection error", 500
+
+        cursor = conn.cursor(dictionary=True)
+        full_name = session.get("full_name")  # get full name from session
+        first_name = session.get("first_name", "Student")
+
+        # Fetch only this student's applications by full name
+        cursor.execute("""
+            SELECT * FROM deans_list_applications
+            WHERE full_name=%s
+            ORDER BY created_at DESC
+        """, (full_name,))
+        applications = cursor.fetchall()
+
+        # Compute stats
+        total_apps = len(applications)
+        pending_apps = len([a for a in applications if a['status'] == 'Pending'])
+        approved_apps = len([a for a in applications if a['status'] == 'Approved'])
+        rejected_apps = len([a for a in applications if a['status'] == 'Rejected'])
+
+        cursor.close()
+        conn.close()
+
+        return render_template(
+            "student.html",
+            first_name=first_name,
+            applications=applications,
+            total_apps=total_apps,
+            pending_apps=pending_apps,
+            approved_apps=approved_apps,
+            rejected_apps=rejected_apps
+        )
+
+    except Exception as e:
+        return f"Error: {e}", 500
+
 
 
 # ---------------- Admin Login ----------------
@@ -1130,11 +1164,40 @@ def admin_login():
 @login_required(role="admin")
 def admin_dashboard():
     try:
-        # Get database connection
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
-        # ---------------- KPI COUNTS ----------------
+        # ==========================
+        # GET FILTERS
+        # ==========================
+        year_filter = request.args.get("year", None)
+        sem_filter = request.args.get("semester", None)
+
+        # Build base filter
+        base_conditions = []
+        base_params = []
+
+        if year_filter and year_filter != "All":
+            base_conditions.append("academic_year = %s")
+            base_params.append(year_filter)
+
+        if sem_filter and sem_filter != "All":
+            base_conditions.append("semester = %s")
+            base_params.append(sem_filter)
+
+        base_where = ""
+        if base_conditions:
+            base_where = " WHERE " + " AND ".join(base_conditions)
+
+        # Helper function to combine status filter
+        def where_with_status(status_value):
+            if base_where:
+                return base_where + " AND status = %s", base_params + [status_value]
+            return " WHERE status = %s", [status_value]
+
+        # ==========================
+        # KPI COUNTS
+        # ==========================
         cursor.execute("SELECT COUNT(*) AS count FROM users WHERE role='student'")
         total_students = cursor.fetchone()['count']
 
@@ -1144,10 +1207,19 @@ def admin_dashboard():
         cursor.execute("SELECT COUNT(*) AS count FROM student_feedback")
         total_feedback = cursor.fetchone()['count']
 
-        cursor.execute("SELECT COUNT(*) AS count FROM deans_list_applications WHERE status='Pending'")
+        # Pending Applications (with filters)
+        where_clause, params = where_with_status("Pending")
+        cursor.execute(f"SELECT COUNT(*) AS count FROM deans_list_applications {where_clause}", params)
         pending_applications = cursor.fetchone()['count']
 
-        # ---------------- USERS PER MONTH ----------------
+        # Approved Applications (with filters)
+        where_clause, params = where_with_status("Dean Approved")
+        cursor.execute(f"SELECT COUNT(*) AS count FROM deans_list_applications {where_clause}", params)
+        approved_applications = cursor.fetchone()['count']
+
+        # ==========================
+        # USERS PER MONTH (UNFILTERED)
+        # ==========================
         cursor.execute("""
             SELECT MONTH(created_at) AS month, COUNT(*) AS count
             FROM users
@@ -1156,9 +1228,10 @@ def admin_dashboard():
             ORDER BY MONTH(created_at)
         """)
         users_monthly = cursor.fetchall()
-        
-        month_map = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'}
-        
+
+        month_map = {1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',
+                     7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'}
+
         def get_full_year_data(data):
             data_dict = {i: 0 for i in range(1, 13)}
             for row in data:
@@ -1167,46 +1240,61 @@ def admin_dashboard():
 
         user_months, user_counts = get_full_year_data(users_monthly)
 
-        # ---------------- ANNOUNCEMENTS PER MONTH ----------------
+        # ==========================
+        # ANNOUNCEMENTS PER MONTH (UNFILTERED)
+        # ==========================
         cursor.execute("""
             SELECT MONTH(created_at) AS month, COUNT(*) AS count
             FROM announcements
             GROUP BY MONTH(created_at)
             ORDER BY MONTH(created_at)
         """)
-        announcements_monthly = cursor.fetchall()
-        announcement_months, announcement_counts = get_full_year_data(announcements_monthly)
+        ann_monthly = cursor.fetchall()
+        announcement_months, announcement_counts = get_full_year_data(ann_monthly)
 
-        # ---------------- FEEDBACK PER MONTH ----------------
+        # ==========================
+        # FEEDBACK PER MONTH (UNFILTERED)
+        # ==========================
         cursor.execute("""
             SELECT MONTH(created_at) AS month, COUNT(*) AS count
             FROM student_feedback
             GROUP BY MONTH(created_at)
             ORDER BY MONTH(created_at)
         """)
-        feedback_monthly = cursor.fetchall()
-        feedback_months, feedback_counts = get_full_year_data(feedback_monthly)
+        fb_monthly = cursor.fetchall()
+        feedback_months, feedback_counts = get_full_year_data(fb_monthly)
 
-        cursor.execute("""
-            SELECT academic_year, COUNT(*) as count
-            FROM deans_list_applications
-            GROUP BY academic_year
-            ORDER BY academic_year ASC
-        """)
-        dean_data = cursor.fetchall()
-
-
-        # ---------------- DEAN'S LIST APPLICATION STATUS ----------------
-        cursor.execute("""
+        # ==========================
+        # FILTERED STATUS DISTRIBUTION
+        # ==========================
+        cursor.execute(f"""
             SELECT status, COUNT(*) AS count
             FROM deans_list_applications
+            {base_where}
             GROUP BY status
-        """)
+        """, base_params)
         dean_data = cursor.fetchall()
+
         dean_statuses = [row['status'] for row in dean_data]
         dean_counts = [row['count'] for row in dean_data]
 
-        # ---------------- RECENT ANNOUNCEMENTS ----------------
+        # ==========================
+        # APPROVED PER YEAR & SEMESTER
+        # ==========================
+        where_clause, params = where_with_status("Dean Approved")
+
+        cursor.execute(f"""
+            SELECT academic_year, semester, COUNT(*) AS count
+            FROM deans_list_applications
+            {where_clause}
+            GROUP BY academic_year, semester
+            ORDER BY academic_year ASC, semester ASC
+        """, params)
+        approved_per_semester = cursor.fetchall()
+
+        # ==========================
+        # RECENT ANNOUNCEMENTS (Unfiltered)
+        # ==========================
         cursor.execute("""
             SELECT title, body, created_at
             FROM announcements
@@ -1215,7 +1303,9 @@ def admin_dashboard():
         """)
         recent_announcements = cursor.fetchall()
 
-        # ---------------- RECENT FEEDBACK ----------------
+        # ==========================
+        # RECENT FEEDBACK (Unfiltered)
+        # ==========================
         cursor.execute("""
             SELECT sf.feedback, sf.created_at, sf.anonymous, u.fullname
             FROM student_feedback sf
@@ -1225,11 +1315,9 @@ def admin_dashboard():
         """)
         recent_feedback = cursor.fetchall()
 
-        # Close connection
         cursor.close()
         conn.close()
 
-        # Pass data to template
         return render_template(
             "admin_dashboard.html",
             user_months=user_months,
@@ -1246,12 +1334,19 @@ def admin_dashboard():
             total_announcements=total_announcements,
             total_feedback=total_feedback,
             pending_applications=pending_applications,
-            admin=session.get('admin')
+            approved_applications=approved_applications,
+            approved_per_semester=approved_per_semester,
+            current_year=year_filter or "All",
+            current_semester=sem_filter or "All",
+            admin=session.get("admin")
         )
 
     except Exception as e:
-        print(f"Error: {e}")
+        print("Error:", e)
         return f"Error: {e}", 500
+
+
+
 
 
 
@@ -1276,11 +1371,57 @@ def student_settings():
     return render_template('student_settings.html')
 
 # Route for Admin Settings
-@app.route('/admin/settings')
+@app.route('/admin/settings', methods=['GET', 'POST'])
 def admin_settings():
-    # Directly render the admin settings page without checking the session
-    return render_template('admin_settings.html')
+    if request.method == 'POST':
+        current_password = request.form['current_password']
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
 
+        # Check if new password matches confirmation
+        if new_password != confirm_password:
+            flash("New password and confirmation do not match!", "error")
+            return redirect('/admin/settings')
+
+        # Get database connection
+        conn = get_db()
+        if not conn:
+            flash("Database connection error!", "error")
+            return redirect('/admin/settings')
+
+        cursor = conn.cursor(dictionary=True)
+
+        # Get current logged-in admin username from session
+        admin_username = session.get('username')  # Make sure you set this at login
+
+        # Fetch the admin record
+        cursor.execute("SELECT * FROM admin WHERE username=%s", (admin_username,))
+        admin = cursor.fetchone()
+
+        if not admin:
+            flash("Admin not found!", "error")
+            cursor.close()
+            conn.close()
+            return redirect('/admin/settings')
+
+        # Verify current password
+        if not check_password_hash(admin['password'], current_password):
+            flash("Current password is incorrect!", "error")
+            cursor.close()
+            conn.close()
+            return redirect('/admin/settings')
+
+        # Update password (hashed)
+        hashed_password = generate_password_hash(new_password)
+        cursor.execute("UPDATE admin SET password=%s WHERE id=%s", (hashed_password, admin['id']))
+        conn.commit()
+
+        flash("Password updated successfully!", "success")
+        cursor.close()
+        conn.close()
+        return redirect('/admin/settings')
+
+    return render_template('admin_settings.html')
 
 # ---------------- Dean Login ----------------
 @app.route("/dean/login", methods=["GET", "POST"])
@@ -1312,7 +1453,6 @@ def dean_login():
     return render_template("dean_login.html")
 
 
-# ---------------- Dean Dashboard ----------------
 @app.route("/dean/dashboard")
 @login_required(role="dean")
 def dean_dashboard():
@@ -1320,27 +1460,90 @@ def dean_dashboard():
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
-        # KPI Counts
-        cursor.execute("SELECT COUNT(*) as count FROM deans_list_applications")
-        total_apps = cursor.fetchone()['count']
+        # Get filters from URL
+        year_filter = request.args.get("year", None)
+        sem_filter = request.args.get("semester", None)
 
-        cursor.execute("SELECT COUNT(*) as count FROM deans_list_applications WHERE status='For Dean Review'")
-        pending_apps = cursor.fetchone()['count']
+        # Build base WHERE conditions for filters (academic year / semester)
+        base_conditions = []
+        base_params = []
 
-        cursor.execute("SELECT COUNT(*) as count FROM deans_list_applications WHERE status='Dean Approved'")
-        approved_apps = cursor.fetchone()['count']
+        if year_filter:
+            base_conditions.append("academic_year = %s")
+            base_params.append(year_filter)
 
-        cursor.execute("SELECT COUNT(*) as count FROM deans_list_applications WHERE status='Dean Rejected'")
-        rejected_apps = cursor.fetchone()['count']
+        if sem_filter:
+            base_conditions.append("semester = %s")
+            base_params.append(sem_filter)
 
-        # Course Distribution
-        cursor.execute("""
-            SELECT course, COUNT(*) as count 
-            FROM deans_list_applications 
+        # Build the base WHERE clause string (may be empty)
+        base_where = ""
+        if base_conditions:
+            base_where = " WHERE " + " AND ".join(base_conditions)
+
+        # Helper to attach status condition safely
+        def where_with_status(status_value):
+            if base_where:
+                # base_where already starts with " WHERE ..."
+                return base_where + " AND status = %s", base_params + [status_value]
+            else:
+                return " WHERE status = %s", [status_value]
+
+        # ---------------- KPI Counts ----------------
+        # Total (respecting filters)
+        cursor.execute(f"SELECT COUNT(*) AS count FROM deans_list_applications {base_where}", base_params)
+        row = cursor.fetchone()
+        total_apps = int(row['count']) if row and row.get('count') is not None else 0
+
+        # Pending (status = 'For Dean Review') with filters
+        where_clause, params = where_with_status('For Dean Review')
+        cursor.execute(f"SELECT COUNT(*) AS count FROM deans_list_applications {where_clause}", params)
+        row = cursor.fetchone()
+        pending_apps = int(row['count']) if row and row.get('count') is not None else 0
+
+        # Approved (status = 'Dean Approved') with filters
+        where_clause, params = where_with_status('Dean Approved')
+        cursor.execute(f"SELECT COUNT(*) AS count FROM deans_list_applications {where_clause}", params)
+        row = cursor.fetchone()
+        approved_apps = int(row['count']) if row and row.get('count') is not None else 0
+
+        # Rejected (status = 'Dean Rejected') with filters
+        where_clause, params = where_with_status('Dean Rejected')
+        cursor.execute(f"SELECT COUNT(*) AS count FROM deans_list_applications {where_clause}", params)
+        row = cursor.fetchone()
+        rejected_apps = int(row['count']) if row and row.get('count') is not None else 0
+
+        # ---------------- Course Distribution ----------------
+        cursor.execute(f"""
+            SELECT course, COUNT(*) AS count
+            FROM deans_list_applications
+            {base_where}
             GROUP BY course
-        """)
-        course_data = cursor.fetchall()
-        course_counts = {row['course']: row['count'] for row in course_data}
+        """, base_params)
+        course_data = cursor.fetchall() or []
+        for r in course_data:
+            r['count'] = int(r['count'])
+
+        # ---------------- Dean-Approved Data Grouping ----------------
+        # We always want status='Dean Approved' plus any filters
+        # Build where clause for this specifically
+        if base_where:
+            approved_where = base_where + " AND status = %s"
+            approved_params = base_params + ['Dean Approved']
+        else:
+            approved_where = " WHERE status = %s"
+            approved_params = ['Dean Approved']
+
+        cursor.execute(f"""
+            SELECT academic_year, semester, COUNT(*) AS count
+            FROM deans_list_applications
+            {approved_where}
+            GROUP BY academic_year, semester
+            ORDER BY academic_year ASC, semester ASC
+        """, approved_params)
+        dean_approved_data = cursor.fetchall() or []
+        for r in dean_approved_data:
+            r['count'] = int(r['count'])
 
         cursor.close()
         conn.close()
@@ -1352,11 +1555,16 @@ def dean_dashboard():
             pending_apps=pending_apps,
             approved_apps=approved_apps,
             rejected_apps=rejected_apps,
-            course_counts=course_counts
+            course_data=course_data,
+            dean_approved_data=dean_approved_data,
+            current_year=year_filter or "All",
+            current_semester=sem_filter or "All"
         )
+
     except Exception as e:
-        print(f"Error: {e}")
+        print("Error:", e)
         return f"Error: {e}", 500
+
 
 
 # ---------------- Dean Applications ----------------
@@ -1392,7 +1600,7 @@ def dean_applications():
                 cursor.execute("SELECT id FROM users WHERE fullname=%s AND role='student'", (full_name,))
                 student = cursor.fetchone()
                 if student:
-                    notification_message = f"Your application status has been updated to {status} by the Dean. Comment: {comment}"
+                    notification_message = f"Your application status has been updated to {status} by the Dean. <br>\nRemarks: {comment}"
                     cursor.execute(
                         "INSERT INTO student_notification (student_id, message, status) VALUES (%s, %s, %s)",
                         (student["id"], notification_message, status)

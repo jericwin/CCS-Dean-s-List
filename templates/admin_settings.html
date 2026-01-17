@@ -318,6 +318,39 @@
           padding: 20px;
         }
       }
+      .flash-messages {
+  margin-bottom: 1rem;
+}
+.alert {
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+.alert-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.password-field {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    user-select: none;
+  }
     </style>
   </head>
   <body>
@@ -335,6 +368,10 @@
           <i class="fas fa-bullhorn"></i>
           <span>Announcements</span>
         </a>
+        <a href="{{ url_for('admin_chat') }}" class="nav-link">
+          <i class="fas fa-comments"></i>
+          <span>Chat Support</span>
+        </a>
         <a
           href="{{ url_for('admin_deans_list_applications') }}"
           class="nav-link"
@@ -342,14 +379,8 @@
           <i class="fas fa-award"></i>
           <span>Dean's List</span>
         </a>
-        <a href="{{ url_for('admin_chat') }}" class="nav-link">
-          <i class="fas fa-comments"></i>
-          <span>Chat Support</span>
-        </a>
-        <a href="{{ url_for('admin_feedback') }}" class="nav-link">
-          <i class="fas fa-comment-dots"></i>
-          <span>Feedback</span>
-        </a>
+        
+        
         <a href="{{ url_for('admin_ranking') }}" class="nav-link">
           <i class="fas fa-trophy"></i>
           <span>Ranking</span>
@@ -394,63 +425,49 @@
     </script>
 
     <!-- Content -->
-    <div class="content">
-      <h1>Admin Settings</h1>
+<div class="content">
+  <h1>Admin Settings</h1>
 
-      <!-- Settings Form -->
-      <div class="form-card">
-        <h3>Change Password</h3>
-        <form action="/admin/settings" method="POST">
-          <input
-            type="password"
-            name="current_password"
-            placeholder="Current Password"
-            required
-          />
-          <input
-            type="password"
-            name="new_password"
-            placeholder="New Password"
-            required
-          />
-          <input
-            type="password"
-            name="confirm_password"
-            placeholder="Confirm New Password"
-            required
-          />
-          <input type="submit" value="Update Password" />
-        </form>
+  <!-- Settings Form -->
+  <div class="form-card">
+    <h3>Change Password</h3>
+    <form action="/admin/settings" method="POST">
+      <div class="password-field">
+        <input type="password" name="current_password" placeholder="Current Password" required />
+  <i class="fa-solid fa-eye toggle-password"></i>
       </div>
 
-      <!-- Update Admin Info Form -->
-      <div class="form-card">
-        <h3>Update Admin Information</h3>
-        <form action="/admin/settings" method="POST">
-          <input
-            type="text"
-            name="first_name"
-            placeholder="First Name"
-            required
-          />
-          <input
-            type="text"
-            name="last_name"
-            placeholder="Last Name"
-            required
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email Address"
-            required
-          />
-          <input type="submit" value="Update Information" />
-        </form>
+      <div class="password-field">
+        <input type="password" name="new_password" placeholder="New Password" required />
+  <i class="fa-solid fa-eye toggle-password"></i>
       </div>
-    </div>
+
+      <div class="password-field">
+        <input type="password" name="confirm_password" placeholder="Confirm New Password" required />
+  <i class="fa-solid fa-eye toggle-password"></i>
+      </div>
+
+      <input type="submit" value="Update Password" class="btn btn-primary"/>
+    </form>
+  </div>
+</div>
 
     <script>
+      document.querySelectorAll('.toggle-password').forEach(function(icon) {
+  icon.addEventListener('click', function() {
+    const input = this.previousElementSibling;
+    if (input.type === 'password') {
+      input.type = 'text';
+      this.classList.remove('fa-eye');
+      this.classList.add('fa-eye-slash');
+    } else {
+      input.type = 'password';
+      this.classList.remove('fa-eye-slash');
+      this.classList.add('fa-eye');
+    }
+  });
+});
+
       // Dropdown toggle
       const userIcon = document.getElementById("userIcon");
       const userDropdown = document.getElementById("userDropdown");

@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>College of Computer Studies | CCS Portal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCS Portal | Dean's List</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <link rel="shortcut icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
@@ -19,7 +20,6 @@
     --card-bg: #3A2A2A;
 }
 
-/* Reset */
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
     font-family:'Inter', sans-serif;
@@ -27,7 +27,7 @@ body {
     min-height:100vh;
     background: var(--dark-bg);
     color: var(--text-light);
-    overflow-y: auto;
+    overflow-y:auto;
 }
 
 /* Sidebar */
@@ -57,8 +57,8 @@ body {
     align-items:center;
     gap:12px;
     color:#fff;
-    padding:14px 22px;
-    margin:8px 15px;
+    padding:12px 20px;
+    margin:6px 15px;
     text-decoration:none;
     font-weight:500;
     border-radius:10px;
@@ -66,16 +66,10 @@ body {
     position:relative;
 }
 .nav-links a i { font-size:18px; }
-.nav-links a:hover {
-    background: var(--orange);
-    color:white;
-}
+.nav-links a:hover, .nav-links a.active { background: var(--orange); color:white; }
 
 /* User dropdown */
-.user-menu {
-    padding:15px;
-    text-align:center;
-}
+.user-menu { padding:15px; text-align:center; }
 .user-box {
     background: var(--light-bg);
     padding:12px;
@@ -88,20 +82,8 @@ body {
     gap:10px;
 }
 .user-box i { font-size:20px; }
-.dropdown {
-    display:none;
-    margin-top:10px;
-    background: var(--light-bg);
-    border-radius:10px;
-    overflow:hidden;
-}
-.dropdown a {
-    display:block;
-    padding:10px;
-    color: var(--text-light);
-    text-decoration:none;
-    transition:0.3s;
-}
+.dropdown { display:none; margin-top:10px; background: var(--light-bg); border-radius:10px; overflow:hidden; }
+.dropdown a { display:block; padding:10px; color: var(--text-light); text-decoration:none; transition:0.3s; }
 .dropdown a:hover { background: var(--orange); color:white; }
 
 /* Content */
@@ -111,135 +93,48 @@ body {
     flex:1;
     display:flex;
     flex-direction:column;
-    gap:50px;
+    gap:40px;
 }
 
-/* Landing Header / Hero Section */
-.landing-header {
-    text-align:center;
-    padding-bottom:40px;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-}
-.landing-header img {
-    width:140px;
-    max-width:100%;
-    margin-bottom:20px;
-}
-.landing-header h1 {
-    font-size:36px;
-    font-weight:700;
-    color: var(--orange);
-    margin-bottom:15px;
-}
-.landing-header p {
-    font-size:16px;
-    color: var(--text-light);
-    max-width:800px;
-    margin:0 auto 25px;
-    line-height:1.6;
-}
-.landing-header .btn-start {
-    background: var(--orange);
-    color:white;
-    border:none;
-    padding:16px 32px;
-    border-radius:10px;
-    cursor:pointer;
-    font-weight:600;
-    transition:0.3s;
-    font-size:16px;
-    text-decoration:none;
-}
-.landing-header .btn-start:hover { background:#e06513; }
+.page-header h1 { font-size:28px; margin-bottom:5px; }
+.page-header p { color: var(--text-muted); font-size:14px; }
 
-/* Courses Cards */
-.courses-section {
-    text-align:center;
-}
-.courses-section h2 {
-    color: var(--orange);
-    font-size:32px;
-    margin-bottom:35px;
-}
-.courses {
+/* Dashboard Grid */
+.dashboard-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:15px; }
+
+/* KPI Cards */
+.stat-card {
     display:flex;
-    gap:30px;
-    flex-wrap:wrap;
-    justify-content:center;
-}
-.course-card {
+    justify-content: space-between;
+    align-items:center;
     background: var(--card-bg);
-    padding:25px 20px;
-    border-radius:16px;
-    width:280px;
-    text-align:center;
-    box-shadow:0 4px 12px rgba(0,0,0,0.4);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    padding:15px 20px;
+    border-radius:12px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+    transition: all 0.3s;
 }
-.course-card i {
-    font-size:38px;
-    color: var(--orange);
-    margin-bottom:15px;
-}
-.course-card h3 {
-    font-size:18px;
-    margin-bottom:12px;
-}
-.course-card p {
-    font-size:14px;
-    color: var(--text-muted);
-    line-height:1.6;
-}
-.course-card:hover {
-    transform: translateY(-5px);
-    box-shadow:0 10px 25px rgba(0,0,0,0.6);
-}
+.stat-card:hover { transform: translateY(-4px); box-shadow:0 8px 18px rgba(0,0,0,0.5); }
+.stat-info h3 { font-size:14px; margin-bottom:6px; color: var(--orange); }
+.stat-info .value { font-size:20px; font-weight:700; }
+.stat-icon { font-size:28px; padding:12px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+.stat-icon.blue { background:#3A4ED0; color:white; }
+.stat-icon.orange { background:var(--orange); color:white; }
+.stat-icon.green { background:green; color:white; }
+.stat-icon.red { background:red; color:white; }
 
-/* Highlights Section */
-.highlights {
-    display:flex;
-    flex-wrap:wrap;
-    gap:25px;
-    justify-content:center;
-    margin-top:20px;
-}
-.highlight-card {
-    background: var(--card-bg);
-    padding:25px 20px;
-    border-radius:16px;
-    width:260px;
-    text-align:center;
-    box-shadow:0 4px 12px rgba(0,0,0,0.4);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.highlight-card i {
-    font-size:36px;
-    color: var(--orange);
-    margin-bottom:12px;
-}
-.highlight-card h4 {
-    font-size:16px;
-    margin-bottom:10px;
-    font-weight:600;
-}
-.highlight-card p {
-    font-size:14px;
-    color: var(--text-muted);
-    line-height:1.5;
-}
-.highlight-card:hover {
-    transform: translateY(-5px);
-    box-shadow:0 10px 25px rgba(0,0,0,0.6);
-}
+/* Card for Table */
+.card { background: var(--light-bg); border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.4); }
+.card-header { font-weight:600; font-size:16px; margin-bottom:15px; color: var(--orange); }
+
+/* Table */
+.data-table { width:100%; border-collapse:collapse; color: var(--text-light); font-size:14px; }
+.data-table th, .data-table td { padding:10px; text-align:left; }
+.data-table th { color: var(--text-muted); border-bottom:1px solid #555; }
+.data-table td { border-bottom:1px solid #333; }
+.status-badge { font-size:12px; font-weight:600; padding:2px 6px; border-radius:6px; }
 
 /* Footer */
-.footer {
-    text-align:center;
-    padding:25px;
-    background: var(--maroon);
-    color: var(--text-light);
-    font-size:14px;
-}
+.footer { text-align:center; padding:25px; background: var(--maroon); color: var(--text-light); font-size:14px; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width:8px; }
@@ -248,109 +143,305 @@ body {
 
 /* Responsive */
 @media screen and (max-width:768px){
-    .sidebar { width:200px; }
-    .content { margin-left:200px; padding:20px; }
-    .courses, .highlights { flex-direction: column; align-items:center; }
+    .burger-menu {
+        display:flex;
+    }
+    .sidebar {
+        width:260px;
+        position:fixed;
+        left:0;
+        top:0;
+        height:100vh;
+        z-index:1000;
+        transform:translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    .sidebar.active {
+        transform:translateX(0);
+    }
+    .content {
+        margin:0;
+        padding:20px;
+    }
+}
+
+.burger-menu {
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    width:50px;
+    height:50px;
+    cursor:pointer;
+    position:fixed;
+    top:20px;
+    left:20px;
+    z-index:999;
+    background: var(--card-bg);
+    border-radius:10px;
+    transition: all 0.3s ease;
+}
+
+.burger-menu:hover {
+    background: var(--orange);
+}
+
+.burger-menu span {
+    display:block;
+    width:24px;
+    height:3px;
+    background: white;
+    margin:4px 0;
+    border-radius:2px;
+    transition: all 0.3s ease;
+}
+
+.burger-menu.active span:nth-child(1) {
+    transform: rotate(45deg) translate(10px, 10px);
+}
+
+.burger-menu.active span:nth-child(2) {
+    opacity:0;
+}
+
+.burger-menu.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
+/* Overlay for mobile */
+.sidebar-overlay {
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background: rgba(0,0,0,0.6);
+    z-index:999;
+}
+
+.sidebar-overlay.active {
+    display:block;
+}
+
+.file-link i {
+    color: var(--orange);
+    font-size: 16px;
+    transition: transform 0.2s, color 0.2s;
+}
+.file-link:hover i {
+    transform: scale(1.2);
+    color: #ff9b40; /* slightly brighter on hover */
 }
 </style>
 </head>
 <body>
 
+<!-- Burger Menu Toggle -->
+<div class="burger-menu" id="burgerMenu">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<!-- Sidebar Overlay (Mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 <!-- Sidebar -->
 <div class="sidebar">
     <div>
-        <h2>🐦‍🔥 CCS Portal</h2>
+        <h2>CCS Portal</h2>
         <div class="nav-links">
-            <a href="{{ url_for('student_module') }}"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="{{ url_for('student_module') }}" class="active"><i class="fas fa-home"></i> Dashboard</a>
             <a href="{{ url_for('student_announcements') }}"><i class="fas fa-bullhorn"></i> Announcements</a>
             <a href="{{ url_for('student_notifications') }}"><i class="fas fa-bell"></i> Notifications</a>
             <a href="{{ url_for('student_chat') }}"><i class="fas fa-headset"></i> Chat Support</a>
-            <a href="{{ url_for('student_deans_list') }}"><i class="fas fa-award"></i> Dean’s List</a>
-            <a href="{{ url_for('student_feedback') }}"><i class="fas fa-comment-dots"></i> Feedback</a>
+            <a href="{{ url_for('student_deans_list') }}"><i class="fas fa-award"></i> Dean's List</a>
         </div>
     </div>
     <div class="user-menu">
-    <div class="user-box" id="userBox">
-        <i class="fas fa-user-circle"></i> <span>{{ first_name }}</span>
+        <div class="user-box" id="userBox">
+            <i class="fas fa-user-circle"></i> <span>{{ first_name }}</span>
+        </div>
+        <div class="dropdown" id="dropdownMenu">
+            <a href="{{ url_for('student_settings') }}">Settings</a>
+            <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
     </div>
-    <div class="dropdown" id="dropdownMenu">
-        <!-- Settings link without any checks -->
-        <a href="{{ url_for('student_settings') }}">Settings</a>
-        <!-- Logout link (optional) -->
-        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </div>
-</div>
-
-
 </div>
 
 <!-- Main Content -->
 <div class="content">
-
-    <!-- Landing Header -->
-    <div class="landing-header">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="CCS Logo">
-        <h1>Welcome to the College of Computer Studies</h1>
-        <p>The College of Computer Studies (CCS) provides world-class education in Information Technology, Computer Science, and Information Systems. Our programs focus on innovation, practical skills, and ethical computing to prepare students for leadership in the tech industry.</p>
+    <div class="page-header">
+        <h1>Welcome, <span>{{ first_name }}</span></h1>
+        <p>Overview of your Dean's List applications.</p>
     </div>
 
-    <!-- Courses Section -->
-    <div class="courses-section">
-        <h2>Our Programs</h2>
-        <div class="courses">
-            <div class="course-card">
-                <i class="fas fa-laptop-code"></i>
-                <h3>Bachelor of Science in Information Technology</h3>
-                <p>Learn software development, networking, animation, and IT management skills to tackle real-world tech challenges.</p>
+    <div class="dashboard-grid">
+        <!-- KPI Cards -->
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Total Applications</h3>
+                <div class="value">{{ applications|length }}</div>
             </div>
-            <div class="course-card">
-                <i class="fas fa-desktop"></i>
-                <h3>Bachelor of Science in Computer Science</h3>
-                <p>Master algorithms, programming languages, AI, and software engineering principles to innovate and solve complex problems.</p>
+            <div class="stat-icon blue">
+                <i class="fas fa-file-alt"></i>
             </div>
-            <div class="course-card">
-                <i class="fas fa-server"></i>
-                <h3>Bachelor of Science in Information Systems</h3>
-                <p>Combine business knowledge and technology to design and manage enterprise systems effectively and efficiently.</p>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Pending</h3>
+                <div class="value">
+                    {{ applications|selectattr("status","equalto","Pending")|list|length }}
+                </div>
+            </div>
+            <div class="stat-icon orange">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Approved</h3>
+                <div class="value">
+                    {{ applications|selectattr("status","equalto","Approved")|list|length }}
+                </div>
+            </div>
+            <div class="stat-icon green">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Rejected</h3>
+                <div class="value">
+                    {{ applications|selectattr("status","equalto","Rejected")|list|length }}
+                </div>
+            </div>
+            <div class="stat-icon red">
+                <i class="fas fa-times-circle"></i>
+            </div>
+        </div>
+
+        <!-- Applications Table -->
+        <div class="card" style="grid-column:1/-1;">
+            <div class="card-header">
+                <i class="fas fa-award"></i> My Dean's List Applications
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="data-table">
+                    <thead>
+    <tr style="text-align:left; border-bottom:1px solid #555;">
+        <th>Academic Year <i class="fas fa-sort"></i></th>
+        <th>Semester <i class="fas fa-sort"></i></th>
+        <th>Course <i class="fas fa-sort"></i></th>
+        <th>GWA <i class="fas fa-sort"></i></th>
+        <th>Status <i class="fas fa-sort"></i></th>
+
+                            <th>COG</th>
+                            <th>COE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr>
+                            <td>{{ app.academic_year }}</td>
+                            <td>{{ app.semester }}</td>
+                            <td>{{ app.course }}</td>
+                            <td>{{ app.gwa if app.gwa else '-' }}</td>
+                            <td>
+                                <span class="status-badge"
+                                    style="background-color:
+                                    {% if app.status=='Approved' %}green
+                                    {% elif app.status=='Rejected' %}red
+                                    {% else %}var(--orange)
+                                    {% endif %};
+                                    color:white;">
+                                    {{ app.status }}
+                                </span>
+                            </td>
+                           <td>
+    {% if app.cog_filename %}
+        <a href="{{ url_for('static', filename='uploads/' ~ app.cog_filename) }}" target="_blank" class="file-link">
+            <i class="fas fa-file-alt"></i>
+        </a>
+    {% else %}-{% endif %}
+</td>
+<td>
+    {% if app.coe_filename %}
+        <a href="{{ url_for('static', filename='uploads/' ~ app.coe_filename) }}" target="_blank" class="file-link">
+            <i class="fas fa-file-alt"></i>
+        </a>
+    {% else %}-{% endif %}
+</td>
+
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" style="text-align:center; color:var(--text-muted); padding:10px;">
+                                No applications submitted yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-
-    <!-- Highlights Section -->
-    <div class="courses-section">
-        <h2>Why Choose CCS?</h2>
-        <div class="highlights">
-            <div class="highlight-card">
-                <i class="fas fa-chalkboard-teacher"></i>
-                <h4>Expert Faculty</h4>
-                <p>Learn from experienced instructors who combine academic excellence with real-world industry knowledge.</p>
-            </div>
-            
-            <div class="highlight-card">
-                <i class="fas fa-user-graduate"></i>
-                <h4>Career-Focused</h4>
-                <p>Gain career guidance, internships, and projects that prepare you for success in the tech industry.</p>
-            </div>
-            <div class="highlight-card">
-                <i class="fas fa-award"></i>
-                <h4>Recognized Programs</h4>
-                <p>All programs are designed to meet industry standards and recognized for academic excellence.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-        &copy; {{ current_year }} College of Computer Studies
-    </div>
-
 </div>
 
 <script>
 const userBox = document.getElementById('userBox');
 const dropdownMenu = document.getElementById('dropdownMenu');
-userBox.onclick = () => dropdownMenu.style.display = dropdownMenu.style.display === "block" ? "none" : "block";
-window.onclick = e => { if(!userBox.contains(e.target)) dropdownMenu.style.display = "none"; };
+const burgerMenu = document.getElementById('burgerMenu');
+const sidebar = document.querySelector('.sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+// User dropdown toggle
+userBox.onclick = () => {
+    dropdownMenu.style.display = dropdownMenu.style.display === "block" ? "none" : "block";
+};
+
+window.addEventListener('click', (e) => {
+    if (!userBox.contains(e.target) && !dropdownMenu.contains(e.target)) {
+        dropdownMenu.style.display = "none";
+    }
+});
+
+// Burger menu toggle
+burgerMenu.addEventListener('click', (e) => {
+    e.stopPropagation();
+    burgerMenu.classList.toggle('active');
+    sidebar.classList.toggle('active');
+    sidebarOverlay.classList.toggle('active');
+});
+
+// Close sidebar when clicking overlay
+sidebarOverlay.addEventListener('click', () => {
+    burgerMenu.classList.remove('active');
+    sidebar.classList.remove('active');
+    sidebarOverlay.classList.remove('active');
+});
+
+// Close sidebar when clicking nav links
+document.querySelectorAll('.nav-links a').forEach(link => {
+    link.addEventListener('click', () => {
+        burgerMenu.classList.remove('active');
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+    });
+});
+
+// Close sidebar when window is resized
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+        burgerMenu.classList.remove('active');
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+    }
+});
 </script>
 
 </body>

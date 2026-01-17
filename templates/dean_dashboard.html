@@ -347,8 +347,53 @@
           margin-bottom: 1rem;
         }
       }
+
+      .filter-bar {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    border-radius: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+}
+
+.filter-select {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-select:hover {
+    border-color: var(--primary);
+}
+
     </style>
   </head>
+
+  <script>
+function applyFilters() {
+    let year = document.getElementById("filterYear").value;
+    let sem = document.getElementById("filterSemester").value;
+
+    const params = new URLSearchParams();
+    if (year !== "All") params.append("year", year);
+    if (sem !== "All") params.append("semester", sem);
+
+    window.location.href = "/dean/dashboard?" + params.toString();
+}
+
+function resetFilters() {
+    window.location.href = "/dean/dashboard";
+}
+</script>
+
   <body>
     <!-- Sidebar -->
     <div class="sidebar">
@@ -391,6 +436,37 @@
         </p>
       </div>
 
+<!-- Filters for Academic Year and Semester -->
+<div class="filter-bar" 
+     style="margin-bottom: 1rem; 
+            display:flex; 
+            gap:1rem; 
+            align-items:center; 
+            justify-content:center; 
+            width:100%;">
+            
+    <label style="color: var(--text-muted)">Academic Year:</label>
+    <select id="filterYear" class="filter-select">
+        <option value="All">All</option>
+        <option value="2024-2025">2024-2025</option>
+        <option value="2025-2026">2025-2026</option>
+        <option value="2026-2027">2026-2027</option>  
+    </select>
+
+    <label style="color: var(--text-muted)">Semester:</label>
+    <select id="filterSemester" class="filter-select">
+        <option value="All">All</option>
+        <option value="1st Semester">1st Semester</option>
+        <option value="2nd Semester">2nd Semester</option>
+    </select>
+
+    <button class="btn-sm" onclick="applyFilters()">Apply Filter</button>
+    <button class="btn-sm" style="background:#010101;" onclick="resetFilters()">Reset</button>
+</div>
+
+
+
+
       <div class="dashboard-grid">
         <!-- Row 1: KPI Cards -->
         <div class="stat-card col-span-3">
@@ -405,7 +481,7 @@
 
         <div class="stat-card col-span-3">
           <div class="stat-info">
-            <h3>Pending Review</h3>
+            <h3>Dean Pending </h3>
             <div class="value">{{ pending_apps }}</div>
           </div>
           <div class="stat-icon orange">
@@ -415,7 +491,7 @@
 
         <div class="stat-card col-span-3">
           <div class="stat-info">
-            <h3>Approved</h3>
+            <h3>Dean Approved</h3>
             <div class="value">{{ approved_apps }}</div>
           </div>
           <div class="stat-icon green">
@@ -425,7 +501,7 @@
 
         <div class="stat-card col-span-3">
           <div class="stat-info">
-            <h3>Rejected</h3>
+            <h3>Dean Rejected</h3>
             <div class="value">{{ rejected_apps }}</div>
           </div>
           <div class="stat-icon red">
@@ -434,114 +510,241 @@
         </div>
 
         <!-- Row 2: Charts -->
-        <div class="card col-span-6">
-          <div class="card-header">
-            <div class="card-title">
-              <i class="fas fa-chart-pie"></i>
-              Application Status Distribution
-            </div>
-          </div>
-          <div class="chart-container" style="height: 300px">
-            <canvas id="statusChart"></canvas>
-          </div>
-        </div>
 
-        <div class="card col-span-6">
-          <div class="card-header">
-            <div class="card-title">
-              <i class="fas fa-chart-bar"></i>
-              Applications by Course
-            </div>
-          </div>
-          <div class="chart-container" style="height: 300px">
-            <canvas id="courseChart"></canvas>
-          </div>
-        </div>
-      </div>
+<!-- Dean-Approved Chart -->
+ <!-- full width column -->
+<div class="card col-span-12"> 
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-chart-bar"></i>
+      Dean-Approved Applications (Academic Year + Semester)
+    </div>
+  </div>
+  <div class="chart-container" style="height: 300px">
+    <canvas id="deanChart"></canvas>
+  </div>
+</div>
+
+<!-- Status Pie Chart -->
+<div class="card col-span-6">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-chart-pie"></i>
+      Application Status Distribution
+    </div>
+  </div>
+  <div class="chart-container" style="height: 300px">
+    <canvas id="statusChart"></canvas>
+  </div>
+</div>
+
+<!-- Course Bar Chart -->
+<div class="card col-span-6">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-chart-bar"></i>
+      Applications by Course
+    </div>
+  </div>
+  <div class="chart-container" style="height: 300px">
+    <canvas id="courseChart"></canvas>
+  </div>
+</div>
+
+
+
     </div>
 
     <script>
-      function toggleUserMenu() {
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* ============================================================
+       USER MENU TOGGLE
+    ============================================================ */
+    function toggleUserMenu() {
         const menu = document.getElementById("userDropdown");
         menu.classList.toggle("show");
-      }
+    }
+    window.toggleUserMenu = toggleUserMenu;
 
-      // Close dropdown when clicking outside
-      window.addEventListener("click", function (e) {
+    window.addEventListener("click", function (e) {
         const userBtn = document.querySelector(".user-btn");
         const menu = document.getElementById("userDropdown");
 
-        if (!userBtn.contains(e.target) && !menu.contains(e.target)) {
-          menu.classList.remove("show");
+        if (userBtn && menu) {
+            if (!userBtn.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.remove("show");
+            }
         }
-      });
+    });
 
-      // Logout confirmation
-      const logoutLink = document.querySelector('.dropdown-item.danger');
-      if (logoutLink) {
-          logoutLink.addEventListener('click', (e) => {
-              if (!confirm("Are you sure you want to logout?")) {
-                  e.preventDefault();
-              }
-          });
-      }
+    const logoutLink = document.querySelector(".dropdown-item.danger");
+    if (logoutLink) {
+        logoutLink.addEventListener("click", function (e) {
+            if (!confirm("Are you sure you want to logout?")) {
+                e.preventDefault();
+            }
+        });
+    }
 
-      // Charts
-      // Status Chart
-      new Chart(document.getElementById('statusChart'), {
-          type: 'doughnut',
-          data: {
-              labels: ['Pending', 'Approved', 'Rejected'],
-              datasets: [{
-                  data: [{{ pending_apps }}, {{ approved_apps }}, {{ rejected_apps }}],
-                  backgroundColor: ['#ffc107', '#28a745', '#dc3545'],
-                  borderWidth: 0
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                  legend: {
-                      position: 'bottom',
-                      labels: { color: '#a0a0a0' }
-                  }
-              }
-          }
-      });
+    /* ============================================================
+       1. STATUS PIE CHART
+    ============================================================ */
+    new Chart(document.getElementById("statusChart"), {
+        type: "pie",
+        data: {
+            labels: ["Pending", "Approved", "Rejected"],
+            datasets: [{
+                data: [{{ pending_apps }}, {{ approved_apps }}, {{ rejected_apps }}],
+                backgroundColor: ["#ffc107", "#28a745", "#dc3545"]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: "bottom" }
+            }
+        }
+    });
 
-      // Course Chart
-      const courseData = {{ course_counts|tojson }};
-      new Chart(document.getElementById('courseChart'), {
-          type: 'bar',
-          data: {
-              labels: Object.keys(courseData),
-              datasets: [{
-                  label: 'Applications',
-                  data: Object.values(courseData),
-                  backgroundColor: '#ff7a1a',
-                  borderRadius: 4
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                  legend: { display: false }
-              },
-              scales: {
-                  y: {
-                      beginAtZero: true,
-                      grid: { color: '#333' },
-                      ticks: { color: '#a0a0a0', stepSize: 1 }
-                  },
-                  x: {
-                      grid: { display: false },
-                      ticks: { color: '#a0a0a0' }
-                  }
-              }
-          }
-      });
-    </script>
+    /* ============================================================
+       2. COURSE BAR CHART
+    ============================================================ */
+    const courseData = {{ course_data|tojson }};
+    const courseLabels = courseData.map(item => item.course);
+    const courseCounts = courseData.map(item => item.count);
+
+    new Chart(document.getElementById("courseChart"), {
+        type: "bar",
+        data: {
+            labels: courseLabels,
+            datasets: [{
+                label: "Applications",
+                data: courseCounts,
+                backgroundColor: "#ff7a1a",
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    /* ============================================================
+       3. DEAN-APPROVED CHART (Academic Year + Semester)
+    ============================================================ */
+
+    // Normalize incoming data: replace null/undefined/empty semester with 'Unknown'
+    const deanDataRaw = {{ dean_approved_data|tojson }};
+    const deanData = (deanDataRaw || []).map(d => ({
+      academic_year: d.academic_year || 'Unknown',
+      semester: d.semester || 'Unknown',
+      count: d.count || 0
+    }));
+
+    // Expected structure after normalization:
+    // [{ academic_year: "2023-2024", semester: "1st", count: 45 }, ...]
+
+    const acadYears = [...new Set(deanData.map(d => d.academic_year))];
+    const semesters = [...new Set(deanData.map(d => d.semester))];
+
+    // Auto-color assignment
+    const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"];
+
+    const deanDatasets = semesters.map((sem, index) => ({
+        label: sem + " Semester",
+        data: acadYears.map(year => {
+            const row = deanData.find(d => d.academic_year === year && d.semester === sem);
+            return row ? row.count : 0;
+        }),
+        backgroundColor: colors[index % colors.length],
+        borderRadius: 5
+    }));
+
+    new Chart(document.getElementById("deanChart"), {
+        type: "bar",
+        data: {
+            labels: acadYears,
+            datasets: deanDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: "bottom" }
+            },
+            scales: {
+                y: { beginAtZero: true },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+    document.addEventListener("DOMContentLoaded", function () {
+    const deanDataRaw = {{ dean_approved_data|default([])|tojson }};
+    const deanData = (deanDataRaw || []).map(d => ({
+      academic_year: d.academic_year || 'Unknown',
+      semester: d.semester || 'Unknown',
+      count: d.count || 0
+    }));
+    const ctxDean = document.getElementById("deanChart").getContext("2d");
+
+    let deanChart;
+
+    function renderDeanChart(filterYear = null, filterSemester = null) {
+        const filtered = deanData.filter(d => 
+            (!filterYear || d.academic_year === filterYear) &&
+            (!filterSemester || d.semester === filterSemester)
+        );
+
+        const acadYears = [...new Set(filtered.map(d => d.academic_year))];
+        const semesters = [...new Set(filtered.map(d => d.semester))];
+        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"];
+
+        const datasets = semesters.map((sem, index) => ({
+            label: sem + " Semester",
+            data: acadYears.map(year => {
+                const row = filtered.find(d => d.academic_year === year && d.semester === sem);
+                return row ? row.count : 0;
+            }),
+            backgroundColor: colors[index % colors.length],
+            borderRadius: 5
+        }));
+
+        if (deanChart) deanChart.destroy();
+
+        deanChart = new Chart(ctxDean, {
+            type: "bar",
+            data: { labels: acadYears, datasets: datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: "bottom" } },
+                scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }
+            }
+        });
+    }
+
+    window.applyFilters = () => {
+        const year = document.getElementById("filterYear").value;
+        const sem = document.getElementById("filterSemester").value;
+        renderDeanChart(year, sem);
+    }
+
+    // Initial render
+    renderDeanChart();
+});
+
+
+});
+</script>
+
+
   </body>
 </html>

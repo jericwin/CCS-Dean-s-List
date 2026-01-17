@@ -6,6 +6,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <link rel="shortcut icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
     <style>
         :root {
@@ -218,6 +219,27 @@
                 padding: 20px;
             }
         }
+        .password-field {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.password-field input {
+    width: 100%;
+    padding-right: 40px; /* space for the icon inside */
+    box-sizing: border-box;
+}
+
+.password-field .input-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #555;
+    font-size: 1rem;
+}
+
     </style>
 </head>
 <body>
@@ -225,15 +247,14 @@
 <!-- Sidebar -->
 <div class="sidebar">
     <div>
-        <h2>🐦‍🔥 CCS Portal</h2>
+        <h2>CCS Portal</h2>
         <div class="nav-links">
             <a href="{{ url_for('student_module') }}"><i class="fas fa-home"></i> Dashboard</a>
             <a href="{{ url_for('student_announcements') }}"><i class="fas fa-bullhorn"></i> Announcements</a>
             <a href="{{ url_for('student_notifications') }}"><i class="fas fa-bell"></i> Notifications</a>
             <a href="{{ url_for('student_chat') }}"><i class="fas fa-headset"></i> Chat Support</a>
             <a href="{{ url_for('student_deans_list') }}"><i class="fas fa-award"></i> Dean’s List</a>
-            <a href="{{ url_for('student_feedback') }}"><i class="fas fa-comment-dots"></i> Feedback</a>
-        </div>
+             </div>
     </div>
     <div class="user-menu">
         <div class="user-box" id="userBox">
@@ -253,25 +274,34 @@
     </div>
 
     <div class="form-card">
-        <form method="POST">
-            <label for="first_name">Change First Name</label>
-            <input type="text" name="first_name" id="first_name" value="{{ first_name }}" required>
+    <form method="POST">
+        <label for="current_password">Current Password</label>
+        <div class="password-field">
+            <input type="password" name="current_password" id="current_password" placeholder="Current Password" required>
+            <span class="input-icon">
+                <i class="fa-solid fa-eye toggle-password"></i>
+            </span>
+        </div>
 
-            <label for="last_name">Change Last Name</label>
-            <input type="text" name="last_name" id="last_name" value="{{ last_name }}" required>
-
-            <label for="email">Change Email</label>
-            <input type="email" name="email" id="email" value="{{ email }}" required>
-
-            <label for="new_password">Change Password</label>
+        <label for="new_password">New Password</label>
+        <div class="password-field">
             <input type="password" name="new_password" id="new_password" placeholder="New Password" required>
+            <span class="input-icon">
+                <i class="fa-solid fa-eye toggle-password"></i>
+            </span>
+        </div>
 
-            <label for="confirm_password">Confirm New Password</label>
+        <label for="confirm_password">Confirm New Password</label>
+        <div class="password-field">
             <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm New Password" required>
+            <span class="input-icon">
+                <i class="fa-solid fa-eye toggle-password"></i>
+            </span>
+        </div>
 
-            <button type="submit"><i class="fas fa-save"></i> Save Changes</button>
-        </form>
-    </div>
+        <button type="submit"><i class="fas fa-save"></i> Save Changes</button>
+    </form>
+</div>
 </div>
 
 <script>
@@ -295,6 +325,21 @@ window.onclick = e => {
         dropdownMenu.style.display = "none";
     }
 }
+document.querySelectorAll('.toggle-password').forEach(function(icon) {
+    icon.addEventListener('click', function() {
+        const input = this.closest('.password-field').querySelector('input');
+        if (input.type === 'password') {
+            input.type = 'text';
+            this.classList.remove('fa-eye');
+            this.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            this.classList.remove('fa-eye-slash');
+            this.classList.add('fa-eye');
+        }
+    });
+});
+
 </script>
 
 </body>
