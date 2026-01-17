@@ -279,9 +279,9 @@
             font-weight: 600;
             text-transform: uppercase;
         }
-        .status-badge.pending { background: rgba(255, 193, 7, 0.2); color: var(--warning); }
-        .status-badge.approved { background: rgba(40, 167, 69, 0.2); color: var(--success); }
-        .status-badge.rejected { background: rgba(220, 53, 69, 0.2); color: var(--danger); }
+        .status-badge.pending { content: "SBO Pending"; background: rgba(255, 193, 7, 0.2); color: var(--warning); }
+        .status-badge.approved { content: "SBO Approved"; background: rgba(40, 167, 69, 0.2); color: var(--success); }
+        .status-badge.rejected { content: "SBO Rejected";background: rgba(220, 53, 69, 0.2); color: var(--danger); }
 
         /* Action Button */
         .btn-action {
@@ -491,17 +491,18 @@
                 <i class="fas fa-bullhorn"></i>
                 <span>Announcements</span>
             </a>
+                        <a href="{{ url_for('admin_chat') }}" class="nav-link">
+                <i class="fas fa-comments"></i>
+                <span>Chat Support</span>
+            </a>
             <a href="{{ url_for('admin_deans_list_applications') }}" class="nav-link active">
                 <i class="fas fa-award"></i>
                 <span>Dean's List</span>
             </a>
-            <a href="{{ url_for('admin_chat') }}" class="nav-link">
-                <i class="fas fa-comments"></i>
-                <span>Chat Support</span>
-            </a>
-            <a href="{{ url_for('admin_feedback') }}" class="nav-link">
+
+        <!--    <a href="{{ url_for('admin_feedback') }}" class="nav-link">
                 <i class="fas fa-comment-dots"></i>
-                <span>Feedback</span>
+                <span>Feedback</span> -->
             </a>
             <a href="{{ url_for('admin_ranking') }}" class="nav-link">
                 <i class="fas fa-trophy"></i>
@@ -545,9 +546,9 @@
             <label>Status</label>
             <select id="statusFilter" class="filter-select" onchange="filterTable()">
                 <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
+                <option value="pending">SBO Pending</option>
+                <option value="approved">SBO Approved</option>
+                <option value="rejected">SBO Rejected</option>
             </select>
         </div>
         <div class="filter-group">
@@ -698,13 +699,16 @@
 
         <form method="POST" id="updateForm">
             <input type="hidden" name="app_id" id="modalAppId">
+
+            <input type="hidden" name="academic_year" id="modalYearInput">
+            <input type="hidden" name="semester" id="modalSemInput">
             
             <div class="form-group">
                 <label>Status</label>
                 <select name="status" id="modalStatus" class="form-control">
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
+                    <option value="Pending">SBO Pending</option>
+                    <option value="Approved">SBO Approved</option>
+                    <option value="Rejected">SBO Rejected</option>
                 </select>
             </div>
 
@@ -714,7 +718,7 @@
             </div>
 
             <div class="form-group">
-                <label>Admin Comment</label>
+                <label>Remarks </label>
                 <textarea name="comment" id="modalComment" class="form-control" placeholder="Add a comment..."></textarea>
             </div>
 
@@ -735,29 +739,34 @@
     const modal = document.getElementById('reviewModal');
     const updateForm = document.getElementById('updateForm');
 
-    function openModal(btn) {
-        // Populate Modal Data
-        document.getElementById('modalName').textContent = btn.dataset.name;
-        document.getElementById('modalCourse').textContent = btn.dataset.course;
-        document.getElementById('modalYear').textContent = btn.dataset.year;
-        document.getElementById('modalSem').textContent = btn.dataset.sem;
-        
-        // Populate Form Fields
-        document.getElementById('modalAppId').value = btn.dataset.id;
-        document.getElementById('modalStatus').value = btn.dataset.status;
-        document.getElementById('modalGWA').value = btn.dataset.gwa;
-        document.getElementById('modalComment').value = btn.dataset.comment === 'None' ? '' : btn.dataset.comment;
+function openModal(btn) {
+    // Populate Modal Data
+    document.getElementById('modalName').textContent = btn.dataset.name;
+    document.getElementById('modalCourse').textContent = btn.dataset.course;
+    document.getElementById('modalYear').textContent = btn.dataset.year;
+    document.getElementById('modalSem').textContent = btn.dataset.sem;
+    
+    // Populate Form Fields
+    document.getElementById('modalAppId').value = btn.dataset.id;
+    document.getElementById('modalStatus').value = btn.dataset.status;
+    document.getElementById('modalGWA').value = btn.dataset.gwa;
+    document.getElementById('modalComment').value = btn.dataset.comment === 'None' ? '' : btn.dataset.comment;
 
-        // Update File Links
-        const linkCOG = document.getElementById('linkCOG');
-        const linkCOE = document.getElementById('linkCOE');
-        
-        linkCOG.href = btn.dataset.cogUrl;
-        linkCOE.href = btn.dataset.coeUrl;
+    // ⭐ NEW: Populate hidden academic_year & semester fields
+    document.getElementById('modalYearInput').value = btn.dataset.year;
+    document.getElementById('modalSemInput').value = btn.dataset.sem;
 
-        // Show Modal
-        modal.classList.add('show');
-    }
+    // Update File Links
+    const linkCOG = document.getElementById('linkCOG');
+    const linkCOE = document.getElementById('linkCOE');
+    
+    linkCOG.href = btn.dataset.cogUrl;
+    linkCOE.href = btn.dataset.coeUrl;
+
+    // Show Modal
+    modal.classList.add('show');
+}
+
 
     function closeModal() {
         modal.classList.remove('show');

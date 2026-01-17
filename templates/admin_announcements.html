@@ -319,6 +319,7 @@
       .announcement-card {
         background-color: var(--bg-card);
         border-radius: 12px;
+        
         border: 1px solid var(--border-color);
         overflow: hidden;
         transition: var(--transition);
@@ -522,6 +523,10 @@
           <i class="fas fa-bullhorn"></i>
           <span>Announcements</span>
         </a>
+        <a href="{{ url_for('admin_chat') }}" class="nav-link">
+          <i class="fas fa-comments"></i>
+          <span>Chat Support</span>
+        </a>
         <a
           href="{{ url_for('admin_deans_list_applications') }}"
           class="nav-link"
@@ -529,14 +534,11 @@
           <i class="fas fa-award"></i>
           <span>Dean's List</span>
         </a>
-        <a href="{{ url_for('admin_chat') }}" class="nav-link">
-          <i class="fas fa-comments"></i>
-          <span>Chat Support</span>
-        </a>
-        <a href="{{ url_for('admin_feedback') }}" class="nav-link">
+
+      <!--  <a href="{{ url_for('admin_feedback') }}" class="nav-link">
           <i class="fas fa-comment-dots"></i>
           <span>Feedback</span>
-        </a>
+        </a> -->
         <a href="{{ url_for('admin_ranking') }}" class="nav-link">
           <i class="fas fa-trophy"></i>
           <span>Ranking</span>

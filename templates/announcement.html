@@ -115,10 +115,11 @@ body {
 .announcement-card {
     background: var(--light-bg);
     border-radius:16px;
-    padding:20px;
+    padding:20px !important;
     margin-bottom:20px;
     box-shadow:0 4px 12px rgba(0,0,0,0.4);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-left: 4px solid var(--orange);
 }
 .announcement-card:hover {
     transform: translateY(-5px);
@@ -143,6 +144,80 @@ body {
     font-size:13px;
 }
 
+/* Announcement Carousel */
+.announcement-carousel-container {
+    overflow: hidden;
+    width: 100%;
+}
+
+.announcement-carousel {
+    display: flex;
+    transition: transform 0.5s ease;
+}
+
+.announcement-slide {
+    min-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0px; /* flush rows */
+}
+
+/* Individual announcement card */
+.announcement-card {
+    background-color: #3A2A2A;;
+    color: var(--text-light);
+    padding: 6px 10px;
+    border-radius: 12px; /* circular/rounded edges */
+    border-bottom: 1px solid #333; /* subtle separator */
+    display: flex;
+    flex-direction: column;
+}
+
+.announcement-card h3 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.announcement-card p {
+    margin: 2px 0;
+    font-size: 13px;
+}
+
+.ann-time {
+    font-size: 11px;
+    color: var(--orange);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Navigation buttons */
+.ann-nav-top-right {
+    display: flex;
+    gap: 5px;
+}
+
+.ann-nav {
+    background-color: var(--orange);
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    color: var(--text-light);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.ann-nav:hover {
+    background-color: var(--maroon);
+    transform: scale(1.1);
+}
+
+
 /* Scrollbar */
 ::-webkit-scrollbar { width:8px; }
 ::-webkit-scrollbar-track { background: #2A2323; }
@@ -152,6 +227,8 @@ body {
     .sidebar { width:200px; }
     .content { margin-left:200px; padding:20px; }
 }
+
+
 </style>
 </head>
 <body>
@@ -159,14 +236,14 @@ body {
 <!-- Sidebar -->
 <div class="sidebar">
     <div>
-        <h2>🐦‍🔥 CCS Portal</h2>
+        <h2>CCS Portal</h2>
         <div class="nav-links">
             <a href="{{ url_for('student_module') }}"><i class="fas fa-home"></i> Dashboard</a>
             <a href="{{ url_for('student_announcements') }}"><i class="fas fa-bullhorn"></i> Announcements</a>
             <a href="{{ url_for('student_notifications') }}"><i class="fas fa-bell"></i> Notifications</a>
             <a href="{{ url_for('student_chat') }}"><i class="fas fa-headset"></i> Chat Support</a>
             <a href="{{ url_for('student_deans_list') }}"><i class="fas fa-award"></i> Dean’s List</a>
-            <a href="{{ url_for('student_feedback') }}"><i class="fas fa-comment-dots"></i> Feedback</a>
+            <!-- <a href="{{ url_for('student_feedback') }}"><i class="fas fa-comment-dots"></i> Feedback</a>-->
         </div>
     </div>
     <div class="user-menu">
@@ -183,20 +260,50 @@ body {
 </div>
 
 <!-- Main Content -->
-<div class="content">
-    <h1>Announcements</h1>
-
-    {% for ann in announcements %}
-    <div class="announcement-card">
-        <h3>{{ ann.title }}</h3>
-        <p>{{ ann.body }}</p>
-        {% if ann.image_path %}
-            <img src="{{ url_for('static', filename=ann.image_path.split('static/')[-1]) }}">
-        {% endif %}
-        <small><i class="fas fa-clock"></i> Posted at: {{ ann.created_at }}</small>
+<div class="content" style="position: relative;">
+    <div class="announcements-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom:5px;">
+        <h1>Announcements</h1>
+        <div class="ann-nav-top-right">
+            <button class="ann-nav left" onclick="prevAnnSlide()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="ann-nav right" onclick="nextAnnSlide()">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
     </div>
-    {% endfor %}
+
+    {% if announcements %}
+    <div class="announcement-carousel-container">
+        <div class="announcement-carousel" id="announcementCarousel">
+            {% set chunks = announcements|batch(6, fill_with=None) %}
+            {% for chunk in chunks %}
+            <div class="announcement-slide">
+                {% for ann in chunk %}
+                {% if ann %}
+                <div class="announcement-card">
+                    <div class="announcement-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>{{ ann.title }}</h3>
+                        <div class="ann-time">
+                            <i class="fas fa-clock"></i> {{ ann.created_at }}
+                        </div>
+                    </div>
+                    <p>{{ ann.body }}</p>
+                    {% if ann.image_path %}
+                        <img src="{{ url_for('static', filename=ann.image_path.split('static/')[-1]) }}" style="max-width: 100%; border-radius:4px; margin-top:4px;">
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+        <p style="color: var(--dark-gray);">No announcements available.</p>
+    {% endif %}
 </div>
+
 
 <script>
 const userBox = document.getElementById('userBox');
@@ -204,5 +311,37 @@ const dropdownMenu = document.getElementById('dropdownMenu');
 userBox.onclick = () => dropdownMenu.style.display = dropdownMenu.style.display === "block" ? "none" : "block";
 window.onclick = e => { if(!userBox.contains(e.target)){ dropdownMenu.style.display = "none"; } }
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let currentAnnSlide = 0;
+
+    function getAnnSlides() {
+        return document.querySelectorAll(".announcement-slide");
+    }
+
+    function showAnnSlide(index) {
+        const carousel = document.getElementById("announcementCarousel");
+        const slides = getAnnSlides();
+        if (slides.length === 0) return;
+
+        if(index < 0) index = 0;
+        if(index >= slides.length) index = slides.length - 1;
+
+        carousel.style.transform = `translateX(-${index * 100}%)`;
+        currentAnnSlide = index;
+    }
+
+    window.nextAnnSlide = function() {
+        showAnnSlide(currentAnnSlide + 1);
+    }
+
+    window.prevAnnSlide = function() {
+        showAnnSlide(currentAnnSlide - 1);
+    }
+
+    showAnnSlide(0);
+});
+</script>
+
 </body>
 </html>

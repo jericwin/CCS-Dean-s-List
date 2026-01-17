@@ -84,59 +84,7 @@
             margin-bottom:25px;
         }
 
-        /* Notifications */
-        .notification-card {
-            background: var(--light-bg);
-            padding:20px;
-            border-radius:12px;
-            box-shadow:0 4px 12px rgba(0,0,0,0.35);
-            margin-bottom:18px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .notification-card:hover {
-            transform: translateY(-3px);
-            box-shadow:0 6px 16px rgba(0,0,0,0.5);
-        }
-
-        .notification-header {
-            display:flex;
-            align-items:center;
-            gap:10px;
-            margin-bottom:8px;
-        }
-
-        .notification-header h4 {
-            font-size:17px;
-            font-weight:600;
-            display:flex;
-            align-items:center;
-            gap:8px;
-        }
-
-        .status-badge {
-            font-weight:600;
-            padding:3px 10px;
-            border-radius:6px;
-            font-size:13px;
-            text-transform:capitalize;
-        }
-        .status-approved { background: var(--green); color:white; }
-        .status-rejected { background: var(--red); color:white; }
-        .status-pending { background: var(--yellow); color:white; }
-
-        .notification-message {
-            font-size:15px;
-            line-height:1.5;
-            margin-bottom:12px;
-        }
-
-        .notification-time {
-            font-size:13px;
-            color: var(--text-muted);
-            display:flex;
-            align-items:center;
-            gap:6px;
-        }
+        /* Notifications - Removed, will be defined below in carousel section */
 
         /* User Menu */
         .user-menu { padding:15px; text-align:center; }
@@ -170,6 +118,145 @@
             background: var(--orange); 
             color:white; 
         }
+
+        /* Notifications Header & Navigation */
+        .notifications-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .notif-nav-top-right {
+            display: flex;
+            gap: 8px;
+        }
+
+        .notif-nav {
+            background-color: var(--orange);
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .notif-nav:hover {
+            background-color: #e06b17;
+            transform: scale(1.05);
+        }
+
+        /* Carousel Container */
+        .notification-carousel-container {
+            overflow: hidden;
+            width: 100%;
+            border-radius: 12px;
+        }
+
+        .notification-carousel {
+            display: flex;
+            transition: transform 0.5s ease;
+        }
+
+        .notification-slide {
+            min-width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Notification Card Styling */
+        .notification-card {
+            background: linear-gradient(135deg, #2A2323 0%, #3A2A2A 100%);
+            color: var(--text-light);
+            padding: 14px 16px;
+            border-radius: 10px;
+            border-left: 4px solid var(--orange);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        .notification-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 122, 26, 0.2);
+            border-left-color: #e06b17;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .notif-icon {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notif-icon i {
+            font-size: 16px;
+        }
+
+        .status-badge {
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-transform: capitalize;
+            display: inline-block;
+        }
+
+        .status-badge.approved {
+            background-color: var(--green);
+            color: white;
+        }
+
+        .status-badge.rejected {
+            background-color: var(--red);
+            color: white;
+        }
+
+        .status-badge.pending {
+            background-color: var(--yellow);
+            color: #000;
+            font-weight: 700;
+        }
+
+        .notif-time {
+            font-size: 12px;
+            color: var(--orange);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .notification-message {
+            margin: 6px 0 0 0;
+            font-size: 14px;
+            line-height: 1.4;
+            color: var(--text-light);
+        }
+
+        /* Empty state */
+        .no-notifications {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+
+
     </style>
 </head>
 <body>
@@ -177,14 +264,14 @@
 <!-- Sidebar -->
 <div class="sidebar">
     <div>
-        <h2>🐦‍🔥 CCS Portal</h2>
+        <h2>CCS Portal</h2>
         <div class="nav-links">
             <a href="{{ url_for('student_module') }}"><i class="fas fa-home"></i> Dashboard</a>
             <a href="{{ url_for('student_announcements') }}"><i class="fas fa-bullhorn"></i> Announcements</a>
             <a href="{{ url_for('student_notifications') }}"><i class="fas fa-bell"></i> Notifications</a>
             <a href="{{ url_for('student_chat') }}"><i class="fas fa-headset"></i> Chat Support</a>
             <a href="{{ url_for('student_deans_list') }}"><i class="fas fa-award"></i> Dean’s List</a>
-            <a href="{{ url_for('student_feedback') }}"><i class="fas fa-comment-dots"></i> Feedback</a>
+            <!-- <a href="{{ url_for('student_feedback') }}"><i class="fas fa-comment-dots"></i> Feedback</a>-->
         </div>
     </div>
     <div class="user-menu">
@@ -199,48 +286,111 @@
 </div>
 
 <!-- Main Content -->
-<div class="content">
-    <h1>Notifications</h1>
+<div class="content" style="position: relative;">
+    <div class="notifications-header">
+        <h1>Notifications</h1>
+        <div class="notif-nav-top-right">
+            <button class="notif-nav left" onclick="prevSlide()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="notif-nav right" onclick="nextSlide()">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
 
     {% if notifications %}
-        {% for notification in notifications %}
-        <div class="notification-card">
-            <div class="notification-header">
-                {% if notification.status == "Approved" %}
-                    <i class="fas fa-check-circle" style="color: var(--green);"></i>
-                {% elif notification.status == "Rejected" %}
-                    <i class="fas fa-times-circle" style="color: var(--red);"></i>
-                {% else %}
-                    <i class="fas fa-hourglass-half" style="color: var(--yellow);"></i>
+    <div class="notification-carousel-container">
+        <div class="notification-carousel" id="notificationCarousel">
+            {% set chunks = notifications|batch(6, fill_with=None) %}
+            {% for chunk in chunks %}
+            <div class="notification-slide">
+                {% for notification in chunk %}
+                {% if notification %}
+                <div class="notification-card">
+                    <div class="notification-header">
+                        <div class="notif-icon">
+                            {% if notification.status == "Approved" %}
+                                <i class="fas fa-check-circle" style="color: var(--orange);"></i>
+                            {% elif notification.status == "Rejected" %}
+                                <i class="fas fa-times-circle" style="color: var(--red);"></i>
+                            {% else %}
+                                <i class="fas fa-bell" style="color: var(--orange);"></i>
+                            {% endif %}
+                            <span class="status-badge status-{{ notification.status|lower }}">
+                                {{ notification.status }}
+                            </span>
+                        </div>
+                        <div class="notif-time">
+                            <i class="fas fa-clock"></i> {{ notification.created_at }}
+                        </div>
+                    </div>
+                    <p class="notification-message">{{ notification.message }}</p>
+                </div>
                 {% endif %}
-                <h4>
-                    Application Status: 
-                    <span class="status-badge status-{{ notification.status|lower }}">{{ notification.status }}</span>
-                </h4>
+                {% endfor %}
             </div>
-            <p class="notification-message"><strong>Comment:</strong> {{ notification.message }}</p>
-            <div class="notification-time">
-                <i class="fas fa-clock"></i> {{ notification.created_at }}
-            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
+    </div>
     {% else %}
-        <p style="color:var(--text-muted);">No notifications available.</p>
+        <div class="no-notifications">
+            <i class="fas fa-bell" style="font-size: 48px; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
+            No notifications available.
+        </div>
     {% endif %}
 </div>
 
+
 <script>
-const userIcon = document.getElementById('userIcon');
-const userDropdown = document.getElementById('userDropdown');
+document.addEventListener('DOMContentLoaded', () => {
+    // --- User Dropdown ---
+    const userIcon = document.getElementById('userIcon');
+    const userDropdown = document.getElementById('userDropdown');
 
-userIcon.addEventListener('click', () => {
-    userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
-});
+    userIcon.addEventListener('click', (e) => {
+        e.stopPropagation(); // prevent window click from immediately hiding
+        userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
+    });
 
-window.addEventListener('click', (e) => {
-    if (!userIcon.contains(e.target)) userDropdown.style.display = 'none';
+    window.addEventListener('click', (e) => {
+        if (!userIcon.contains(e.target) && !userDropdown.contains(e.target)) {
+            userDropdown.style.display = 'none';
+        }
+    });
+
+    // --- Notification Carousel ---
+    let currentSlide = 0;
+
+    function getSlides() {
+        return document.querySelectorAll(".notification-slide");
+    }
+
+    function showSlide(index) {
+        const carousel = document.getElementById("notificationCarousel");
+        const slides = getSlides();
+        if (slides.length === 0) return;
+
+        if(index < 0) index = 0;
+        if(index >= slides.length) index = slides.length - 1;
+
+        carousel.style.transform = `translateX(-${index * 100}%)`;
+        currentSlide = index;
+    }
+
+    window.nextSlide = function() {
+        showSlide(currentSlide + 1);
+    }
+
+    window.prevSlide = function() {
+        showSlide(currentSlide - 1);
+    }
+
+    // Optional: show first slide on load
+    showSlide(0);
 });
 </script>
+
 
 </body>
 </html>
