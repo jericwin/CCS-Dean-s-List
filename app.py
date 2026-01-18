@@ -91,10 +91,13 @@ def handle_send_message(data):
 def get_db():
     try:
         conn = mysql.connector.connect(
-            host="127.0.0.1",  # Make sure MySQL is running on localhost
-            user="root",        # Make sure you're using the correct username
-            password="",        # Make sure your password is correct
-            database="student_portal"  # Make sure the database name is correct
+            host=os.environ["MYSQL_HOST"],
+            port=int(os.environ["MYSQL_PORT"]),
+            user=os.environ["MYSQL_USER"],
+            password=os.environ["MYSQL_PASSWORD"],
+            database=os.environ["MYSQL_DB"],
+            ssl_ca=os.environ.get("MYSQL_SSL_CA"),
+            ssl_verify_cert=True
         )
         print("Database connected successfully!")
         return conn
