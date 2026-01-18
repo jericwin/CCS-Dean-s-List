@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session, redirect, url_for, flash, render_template
+from flask import Flask, request, jsonify, session, redirect, url_for, flash, render_template, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import mysql.connector
@@ -13,8 +13,50 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 from functools import wraps
 from werkzeug.security import generate_password_hash
 
+
 app = Flask(__name__)
-app.secret_key = "supersecretkey"  # change in production
+app.secret_key = "supersecretkey"  
+
+# 
+MAINTENANCE_MODE_FILE = "__maintenance_mode__"
+MASTER_PASSWORD = "jericpunaymaintenance"  
+
+def is_maintenance_mode():
+    return os.path.exists(MAINTENANCE_MODE_FILE)
+
+def set_maintenance_mode(on: bool):
+    if on:
+        with open(MAINTENANCE_MODE_FILE, "w") as f:
+            f.write("ON")
+    else:
+        if os.path.exists(MAINTENANCE_MODE_FILE):
+            os.remove(MAINTENANCE_MODE_FILE)
+
+# 
+@app.route("/_toggle_maintenance", methods=["POST"])
+def toggle_maintenance():
+    data = request.get_json(force=True)
+    password = data.get("password")
+    if password == MASTER_PASSWORD:
+        if is_maintenance_mode():
+            set_maintenance_mode(False)
+            return jsonify({"status": "off"})
+        else:
+            set_maintenance_mode(True)
+            return jsonify({"status": "on"})
+    return jsonify({"error": "Invalid password"}), 403
+
+# Global before_request
+@app.before_request
+def check_maintenance():
+    # Always allow static files and the toggle endpoint
+    if request.endpoint in ("toggle_maintenance", "static") or (request.path.startswith("/static")):
+        return
+    if is_maintenance_mode():
+        # Block all navigation, all endpoints, all users, all methods
+        resp = make_response(render_template("index.html", maintenance=True), 503)
+        resp.headers["Retry-After"] = "600"
+        return resp
 
 UPLOAD_FOLDER = 'static/uploads'
 UPLOAD_FOLDER = 'static/uploads/deans_list'
