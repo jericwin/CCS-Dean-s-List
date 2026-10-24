@@ -14,6 +14,7 @@ class VercelPathFix:
         self.wsgi_app = wsgi_app
 
     def __call__(self, environ, start_response):
+        print(f"DEBUG WSGI ENTRY: PATH_INFO={environ.get('PATH_INFO')} SCRIPT_NAME={environ.get('SCRIPT_NAME')} QUERY={environ.get('QUERY_STRING')}", flush=True)
         environ['SCRIPT_NAME'] = ''
         query_string = environ.get('QUERY_STRING', '')
         # Check if rewrite passed the original matched path via __path__
