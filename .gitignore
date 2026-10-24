@@ -215,3 +215,6 @@ static/uploads/
 
 # Document templates
 DL.docx
+
+.vercel
+.env*

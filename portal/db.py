@@ -19,7 +19,7 @@ _lock = threading.Lock()
 
 def _connection_settings(app):
     cfg = app.config
-    return {
+    settings = {
         "host": cfg["DB_HOST"],
         "port": cfg["DB_PORT"],
         "user": cfg["DB_USER"],
@@ -29,6 +29,10 @@ def _connection_settings(app):
         "collation": "utf8mb4_general_ci",
         "autocommit": False,
     }
+    if cfg.get("DB_SSL"):
+        settings["ssl_disabled"] = False
+        settings["ssl_verify_cert"] = False
+    return settings
 
 
 def _get_pool():

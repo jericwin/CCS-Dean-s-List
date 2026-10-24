@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "name": "ccs-deans-list",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index.py?__path__=/$1"
+    }
+  ],
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "{templates/**,static/**}"
+    }
+  }
+}

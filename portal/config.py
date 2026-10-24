@@ -28,6 +28,7 @@ class Config:
     DB_NAME = os.environ.get("DB_NAME", "student_portal")
     DB_POOL_SIZE = int(os.environ.get("DB_POOL_SIZE", "8"))
     AUTO_MIGRATE = _bool("AUTO_MIGRATE", True)
+    DB_SSL = _bool("DB_SSL", False)
 
     # Sessions
     SESSION_COOKIE_HTTPONLY = True
@@ -39,13 +40,18 @@ class Config:
 
     # Uploads
     MAX_CONTENT_LENGTH = int(os.environ.get("MAX_UPLOAD_MB", "10")) * 1024 * 1024
+    IS_VERCEL = bool(os.environ.get("VERCEL"))
+    UPLOAD_ROOT = "/tmp" if IS_VERCEL else BASE_DIR
+
     # Application documents (COG/COE) are private and served only through an access-checked route.
     PRIVATE_UPLOAD_FOLDER = os.environ.get(
-        "PRIVATE_UPLOAD_FOLDER", os.path.join(BASE_DIR, "instance", "uploads", "applications")
+        "PRIVATE_UPLOAD_FOLDER", os.path.join(UPLOAD_ROOT, "instance", "uploads", "applications")
     )
     # Files uploaded before the reengineering live here; still readable for existing records.
     LEGACY_UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
-    ANNOUNCEMENT_UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads", "announcements")
+    ANNOUNCEMENT_UPLOAD_FOLDER = os.environ.get(
+        "ANNOUNCEMENT_UPLOAD_FOLDER", os.path.join(UPLOAD_ROOT, "static", "uploads", "announcements")
+    )
 
     # Ranking export: "auto" tries the DL.docx template through MS Word first, then falls back to ReportLab.
     PDF_EXPORT_ENGINE = os.environ.get("PDF_EXPORT_ENGINE", "auto")

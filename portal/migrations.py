@@ -26,7 +26,10 @@ def _index_exists(cur, table, index):
 
 def upgrade(logger=None):
     applied = []
-    with db.transaction() as cur:
+    conn = db.get_connection()
+    conn.autocommit = True
+    cur = conn.cursor(dictionary=True)
+    try:
         # 1. Link applications to the student account instead of matching on full name.
         if not _column_exists(cur, "deans_list_applications", "student_id"):
             cur.execute("ALTER TABLE deans_list_applications ADD COLUMN student_id INT(11) NULL AFTER id")
@@ -72,6 +75,9 @@ def upgrade(logger=None):
         if not _index_exists(cur, "chat_messages", "idx_chat_conversation"):
             cur.execute("ALTER TABLE chat_messages ADD INDEX idx_chat_conversation (sender_id, receiver_id, timestamp)")
             applied.append("index idx_chat_conversation")
+    finally:
+        cur.close()
+        conn.close()
 
     if logger and applied:
         logger.info("Schema upgraded: %s", ", ".join(applied))
