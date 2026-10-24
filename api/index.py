@@ -1,59 +1,16 @@
 import os
 import sys
-import urllib.parse
 
-# Add project root directory to Python path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
 from app import app
+from flask import request, redirect
 
-class VercelPathFix:
-    def __init__(self, wsgi_app):
-        self.wsgi_app = wsgi_app
-
-    def __call__(self, environ, start_response):
-        print(f"DEBUG WSGI ENTRY: PATH_INFO={environ.get('PATH_INFO')} SCRIPT_NAME={environ.get('SCRIPT_NAME')} QUERY={environ.get('QUERY_STRING')}", flush=True)
-        environ['SCRIPT_NAME'] = ''
-        query_string = environ.get('QUERY_STRING', '')
-        # Check if rewrite passed the original matched path via __path__
-        if '__path__' in query_string:
-            params = urllib.parse.parse_qs(query_string, keep_blank_values=True)
-            if '__path__' in params and params['__path__']:
-                req_path = params['__path__'][0]
-                if not req_path.startswith('/'):
-                    req_path = '/' + req_path
-                environ['PATH_INFO'] = req_path
-                # Remove __path__ so the Flask application doesn't see internal rewrite params
-                params.pop('__path__', None)
-                environ['QUERY_STRING'] = urllib.parse.urlencode(params, doseq=True)
-        else:
-            path_info = environ.get('PATH_INFO', '')
-            if path_info in ('/api/index', '/api/index.py', '/api/index/', '/api') or path_info.startswith('/api/index'):
-                original_path = (
-                    environ.get('HTTP_X_MATCHED_PATH') or
-                    environ.get('HTTP_X_FORWARDED_URI') or
-                    environ.get('HTTP_X_ORIGINAL_URI') or
-                    environ.get('REQUEST_URI')
-                )
-                if original_path and not original_path.startswith('/api/index'):
-                    clean_path = original_path.split('?')[0]
-                    environ['PATH_INFO'] = clean_path if clean_path else '/'
-                else:
-                    environ['PATH_INFO'] = '/'
-
-        return self.wsgi_app(environ, start_response)
-
-from flask import request
-
-@app.before_request
-def log_vercel_routing():
-    app.logger.info(
-        f"VERCEL ROUTE: path={request.path} | script_root={request.script_root} | "
-        f"environ_path={request.environ.get('PATH_INFO')} | environ_script={request.environ.get('SCRIPT_NAME')} | "
-        f"query={request.environ.get('QUERY_STRING')}"
-    )
-
-# Wrap Flask's internal wsgi_app so `app` remains an authentic Flask instance
-app.wsgi_app = VercelPathFix(app.wsgi_app)
+@app.route('/api/index.py')
+@app.route('/api/index')
+def vercel_entry():
+    real_path = request.args.get('__path__', '/')
+    query = request.query_string.decode('utf-8')
+    return f"MATCHED VERCEL ENTRY! real_path={real_path} | raw_path={request.path} | query={query}"
