@@ -1,15 +1,9 @@
 {
-  "version": 2,
-  "name": "ccs-deans-list",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api/index.py?__path__=/$1"
-    }
-  ],
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/index.py": {
-      "includeFiles": "{templates/**,static/**}"
+    "app.py": {
+      "includeFiles": "{templates/**,static/**}",
+      "maxDuration": 30
     }
   }
 }
