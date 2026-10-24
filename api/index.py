@@ -7,7 +7,7 @@ root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
-from app import app as flask_app
+from app import app
 
 class VercelPathFix:
     def __init__(self, wsgi_app):
@@ -44,4 +44,5 @@ class VercelPathFix:
 
         return self.wsgi_app(environ, start_response)
 
-app = VercelPathFix(flask_app)
+# Wrap Flask's internal wsgi_app so `app` remains an authentic Flask instance
+app.wsgi_app = VercelPathFix(app.wsgi_app)
