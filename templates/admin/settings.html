@@ -1,0 +1,37 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Account</span><h1 class="mt-2">Admin <em>settings</em></h1><p>Keep the SBO admin account secure.</p></div>
+</div>
+<div class="grid grid-12">
+  <section class="card span-5" style="align-self:start">
+    <div class="card-body stack" style="--gap:16px">
+      <div class="row" style="--gap:14px">
+        <span class="avatar avatar-lg">{{ (admin.username if admin else current_user_name)|initials }}</span>
+        <div><h2 style="font-size:var(--text-lg)">{{ admin.username if admin else current_user_name }}</h2><span class="muted" style="font-size:var(--text-sm)">SBO administrator</span></div>
+      </div>
+      {% if admin %}<dl class="facts" style="margin:0"><div class="fact"><dt>Account created</dt><dd>{{ admin.created_at|datefmt }}</dd></div><div class="fact"><dt>Password</dt><dd>Hashed (scrypt)</dd></div></dl>{% endif %}
+      <div class="alert alert-warning"><i class="fas fa-shield-halved"></i><span>Use a unique password. Five failed sign-ins lock the account for five minutes.</span></div>
+    </div>
+  </section>
+  <section class="card span-7">
+    <div class="card-header"><div><div class="card-title"><i class="fas fa-key"></i>Change password</div><div class="card-subtitle">At least 8 characters.</div></div></div>
+    <form class="card-body stack" style="--gap:18px" method="POST" action="{{ url_for('admin.settings') }}">
+      {{ csrf_field() }}
+      <div class="field"><label class="label" for="current_password">Current password</label>{{ ui.password_input("current_password", "current_password", "", "current-password") }}</div>
+      <div class="form-grid">
+        <div class="field">
+          <label class="label" for="new_password">New password</label>
+          {{ ui.password_input("new_password", "new_password", "", "new-password", 'minlength="8" maxlength="128"') }}
+          <div class="strength" data-strength-for="new_password" data-score="0"><i></i><i></i><i></i><i></i></div>
+          <span class="help">Use at least 8 characters.</span>
+        </div>
+        <div class="field"><label class="label" for="confirm_password">Confirm new password</label>{{ ui.password_input("confirm_password", "confirm_password", "", "new-password", 'data-match="new_password"') }}</div>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" type="submit"><i class="fas fa-floppy-disk"></i>Update password</button></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "layouts/portal.html" %}
+{% block title %}Chat support{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Support</span><h1 class="mt-2">Chat with the <em>SBO</em></h1><p>Questions about requirements, deadlines or your application? Officers reply here.</p></div>
+</div>
+<section class="card chat-shell single" data-chat="student" data-me="{{ user_id }}">
+  <div class="chat-pane">
+    <div class="chat-head">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="" width="40" height="40" style="border-radius:12px;border:1px solid var(--border);padding:3px;background:#fff">
+      <div><strong>SBO Support</strong><span class="status"><span class="live-dot" data-live-dot></span><span data-live-text>Connecting…</span></span></div>
+    </div>
+    <div class="chat-messages" data-messages aria-live="polite"></div>
+    <div class="typing" data-typing hidden style="padding-left:20px;background:var(--grey-50)"><i class="fas fa-ellipsis fa-beat-fade"></i> SBO is typing…</div>
+    <form class="chat-compose" data-compose data-ajax>
+      <label class="sr-only" for="chatInput">Message</label>
+      <textarea class="textarea" id="chatInput" rows="1" maxlength="2000" placeholder="Type a message… (Enter to send, Shift+Enter for a new line)"></textarea>
+      <button class="btn btn-primary btn-icon" type="submit" aria-label="Send"><i class="fas fa-paper-plane"></i></button>
+    </form>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/chat.js') }}"></script>{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Applications{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Final review</span><h1 class="mt-2">Endorsed <em>applications</em></h1><p>Applications the SBO has verified and forwarded to you. Your decision is final and the student is notified.</p></div>
+</div>
+
+<section class="card">
+  <div class="filter-bar" data-filters="deanTable" style="border-bottom:1px solid var(--grey-150)">
+    <div class="field grow">
+      <label class="label" for="q">Search</label>
+      <div class="input-icon"><i class="fas fa-magnifying-glass"></i><input class="input input-sm" id="q" type="search" placeholder="Student name…" data-filter="q"></div>
+    </div>
+    <div class="field">
+      <label class="label" for="f_status">Status</label>
+      <select class="select select-sm" id="f_status" data-filter="status"><option value="all">All</option>{% for s in domain.DEAN_STATUSES %}<option value="{{ s|lower }}">{{ s|status_label }}</option>{% endfor %}</select>
+    </div>
+    <div class="field">
+      <label class="label" for="f_program">Program</label>
+      <select class="select select-sm" id="f_program" data-filter="program"><option value="all">All programs</option>{% for p in domain.PROGRAMS %}<option value="{{ p|lower }}">{{ p }}</option>{% endfor %}</select>
+    </div>
+    <div class="field">
+      <label class="label" for="f_year">Academic year</label>
+      <select class="select select-sm" id="f_year" data-filter="year"><option value="all">All years</option>{% for y in years %}<option value="{{ y }}">{{ y }}</option>{% endfor %}</select>
+    </div>
+    <div class="filter-actions"><button class="btn btn-ghost btn-sm" style="min-height:38px" data-filter-reset type="button">Clear</button></div>
+  </div>
+  <div class="card-header" style="padding-top:12px;padding-bottom:12px"><span class="result-count" data-result-count="deanTable"></span></div>
+  {% if applications %}
+  <div class="table-wrap">
+    <table class="table stack-mobile" id="deanTable" data-sortable>
+      <thead><tr><th data-sort>Student</th><th data-sort>Course</th><th data-sort>Term</th><th data-sort="number">GWA</th><th data-sort>Status</th><th>Documents</th><th class="text-right">Decision</th></tr></thead>
+      <tbody>
+        {% for app in applications %}
+        <tr data-row data-search="{{ app.full_name }}" data-status="{{ app.status|lower }}" data-program="{{ app.course.split('_')[0]|lower }}" data-year="{{ app.academic_year or '' }}">
+          <td class="cell-main" data-value="{{ app.full_name }}"><div class="cell-person"><span class="avatar">{{ app.full_name|initials }}</span><div><strong>{{ app.full_name }}</strong><span>Submitted {{ app.created_at|datefmt }}</span></div></div></td>
+          <td data-label="Course">{{ app.course|course_label }}</td>
+          <td data-label="Term" class="nowrap">{{ app.academic_year or '—' }} · {{ app.semester or '—' }}</td>
+          <td data-label="GWA" data-value="{{ app.gwa if app.gwa is not none else '' }}"><span class="gwa">{{ '%.2f'|format(app.gwa) if app.gwa is not none else '—' }}</span></td>
+          <td data-label="Status" data-value="{{ app.status }}">{{ ui.status_badge(app.status) }}</td>
+          <td data-label="Files">{{ ui.doc_links(app) }}</td>
+          <td data-label="" class="text-right">
+            <button class="btn btn-sm {% if app.status == 'For Dean Review' %}btn-maroon{% endif %}" type="button" data-review
+              data-id="{{ app.id }}" data-name="{{ app.full_name }}" data-course="{{ app.course|course_label }}"
+              data-year="{{ app.academic_year or '—' }}" data-sem="{{ app.semester or '—' }}" data-status="{{ app.status }}"
+              data-gwa="{{ '%.2f'|format(app.gwa) if app.gwa is not none else '—' }}"
+              data-comment="{{ app.admin_comment if app.admin_comment and app.admin_comment != 'None' else '' }}"
+              data-cog="{{ url_for('files.view_file', application_id=app.id, file_type='cog') if app.cog_filename else '' }}"
+              data-coe="{{ url_for('files.view_file', application_id=app.id, file_type='coe') if app.coe_filename else '' }}">
+              <i class="fas fa-gavel"></i>{{ 'Decide' if app.status == 'For Dean Review' else 'Revise' }}
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div data-filter-empty="deanTable" hidden>{{ ui.empty_state("No matches", "Try a different filter.", icon="fa-magnifying-glass") }}</div>
+  {% else %}
+    {{ ui.empty_state("Nothing endorsed yet", "When the SBO forwards approved applications, they'll appear here for your decision.") }}
+  {% endif %}
+</section>
+
+<div class="modal" id="decideModal" role="dialog" aria-modal="true" aria-labelledby="decideTitle" aria-hidden="true">
+  <div class="modal-dialog wide">
+    <div class="modal-head">
+      <div><h2 id="decideTitle">Dean's decision</h2><p data-f="name"></p></div>
+      <button class="btn btn-ghost btn-icon btn-sm" data-modal-close aria-label="Close"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ url_for('dean.applications') }}" id="decideForm" style="display:contents">
+      {{ csrf_field() }}
+      <input type="hidden" name="app_id">
+      <div class="modal-body stack" style="--gap:18px">
+        <dl class="facts" style="margin:0">
+          <div class="fact"><dt>Course</dt><dd data-f="course"></dd></div>
+          <div class="fact"><dt>Term</dt><dd><span data-f="year"></span> · <span data-f="sem"></span> semester</dd></div>
+          <div class="fact"><dt>Verified GWA</dt><dd class="gwa" data-f="gwa"></dd></div>
+          <div class="fact"><dt>Documents</dt><dd class="row" style="--gap:6px">
+            <a class="btn btn-soft btn-sm" data-f="cog" target="_blank" rel="noopener"><i class="fas fa-file-lines"></i>Open COG</a>
+            <a class="btn btn-soft btn-sm" data-f="coe" target="_blank" rel="noopener"><i class="fas fa-file-lines"></i>Open COE</a>
+          </dd></div>
+        </dl>
+        <fieldset style="border:0;padding:0;margin:0">
+          <legend class="label" style="margin-bottom:8px">Decision</legend>
+          <div class="segmented" style="width:100%">
+            {% for s, label, icon in [('Dean Approved', 'Approve', 'fa-check'), ('Dean Rejected', 'Reject', 'fa-xmark'), ('For Dean Review', 'Keep under review', 'fa-hourglass-half')] %}
+            <label style="flex:1;margin:0"><input class="sr-only" type="radio" name="status" value="{{ s }}" required><span class="btn btn-sm btn-ghost w-full" data-choice><i class="fas {{ icon }}"></i>{{ label }}</span></label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        <div class="field">
+          <div class="row-between"><label class="label" for="d_comment">Comment to the student</label><span class="help num" id="d_count"></span></div>
+          <textarea class="textarea" id="d_comment" name="comment" rows="3" maxlength="2000" placeholder="Optional" data-counter="d_count"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" type="button" data-modal-close>Cancel</button>
+        <button class="btn btn-maroon" type="submit"><i class="fas fa-gavel"></i>Save decision</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<style>
+  #decideForm input[type=radio]:checked + [data-choice] { background: var(--surface); color: var(--maroon-800); box-shadow: var(--shadow-sm); }
+  #decideForm input[type=radio]:focus-visible + [data-choice] { box-shadow: var(--focus); }
+</style>
+<script>
+(() => {
+  const modal = document.getElementById("decideModal");
+  const form = document.getElementById("decideForm");
+  const f = (k) => modal.querySelector(`[data-f="${k}"]`);
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-review]");
+    if (!btn) return;
+    const d = btn.dataset;
+    form.elements.app_id.value = d.id;
+    ["name", "course", "year", "sem", "gwa"].forEach((k) => (f(k).textContent = d[k]));
+    for (const kind of ["cog", "coe"]) { const a = f(kind); a.hidden = !d[kind]; if (d[kind]) a.href = d[kind]; }
+    form.querySelectorAll('input[name="status"]').forEach((r) => (r.checked = r.value === d.status && d.status !== "For Dean Review"));
+    form.elements.comment.value = d.comment;
+    form.elements.comment.dispatchEvent(new Event("input"));
+    Fox.openModal(modal);
+  });
+})();
+</script>
+{% endblock %}

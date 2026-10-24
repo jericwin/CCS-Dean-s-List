@@ -1,0 +1,42 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Announcements{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">From the SBO</span><h1 class="mt-2">Announcements</h1><p>Deadlines, schedules and news from the CCS Student Body Organization.</p></div>
+</div>
+
+{% if announcements %}
+<div class="card filter-bar" data-filters="annGrid" style="margin-bottom:20px">
+  <div class="field grow">
+    <label class="label" for="annSearch">Search</label>
+    <div class="input-icon"><i class="fas fa-magnifying-glass"></i><input class="input input-sm" id="annSearch" type="search" placeholder="Search announcements…" data-filter="q"></div>
+  </div>
+  <span class="result-count" data-result-count="annGrid"></span>
+</div>
+<div class="ann-grid" id="annGrid">
+  {% for ann in announcements %}
+  <article class="card ann-card interactive" data-row data-search="{{ ann.title }} {{ ann.body }}">
+    {% if ann.image_path %}
+    <a class="ann-media" href="{{ url_for('static', filename=ann.image_path.split('static/')[-1]) }}" target="_blank" rel="noopener" aria-label="Open image for {{ ann.title }}">
+      <img src="{{ url_for('static', filename=ann.image_path.split('static/')[-1]) }}" alt="" loading="lazy">
+    </a>
+    {% else %}
+    <div class="ann-placeholder"><i class="fas fa-bullhorn"></i></div>
+    {% endif %}
+    <div class="ann-content">
+      <div class="ann-meta"><span><i class="far fa-calendar"></i> {{ ann.created_at|datefmt }}</span><span>{{ ann.created_at|timeago }}</span>{% if loop.first %}<span class="badge badge-warning">Latest</span>{% endif %}</div>
+      <h3>{{ ann.title }}</h3>
+      <p class="ann-body clamp-3">{{ ann.body }}</p>
+      {% if ann.body|length > 160 %}
+      <div class="ann-foot"><button class="btn btn-ghost btn-sm" type="button" onclick="const c=this.closest('.ann-card');c.querySelector('.ann-body').classList.toggle('clamp-3');this.textContent=c.querySelector('.ann-body').classList.contains('clamp-3')?'Read more':'Show less'">Read more</button></div>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</div>
+<div class="card mt-4" data-filter-empty="annGrid" hidden>{{ ui.empty_state("No matches", "Try a different search term.", icon="fa-magnifying-glass") }}</div>
+{% else %}
+<div class="card">{{ ui.empty_state("No announcements yet", "When the SBO posts news, it will show up here.") }}</div>
+{% endif %}
+{% endblock %}

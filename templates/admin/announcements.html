@@ -1,0 +1,158 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Announcements{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Publish</span><h1 class="mt-2">Manage <em>announcements</em></h1><p>Posts appear immediately on every student's portal.</p></div>
+</div>
+<div class="grid grid-12">
+  <section class="card span-5" style="align-self:start;position:sticky;top:calc(var(--topbar-h) + 12px)">
+    <div class="card-header"><div class="card-title"><i class="fas fa-pen-nib"></i>New announcement</div></div>
+    <form class="card-body stack" style="--gap:16px" method="POST" enctype="multipart/form-data">
+      {{ csrf_field() }}
+      <div class="field"><label class="label" for="title">Title</label><input class="input" id="title" name="title" minlength="3" maxlength="255" placeholder="e.g. Dean's List filing now open" required></div>
+      <div class="field">
+        <div class="row-between"><label class="label" for="body">Content</label><span class="help num" id="bodyCount"></span></div>
+        <textarea class="textarea" id="body" name="body" rows="6" maxlength="5000" placeholder="Details, deadlines, requirements…" required data-counter="bodyCount"></textarea>
+      </div>
+      <div class="field">
+        <span class="label">Image <span class="subtle">(optional)</span></span>
+        {{ ui.dropzone("image", "Add a cover image", "PNG, JPG, GIF or WEBP", "fa-image", accept=".png,.jpg,.jpeg,.gif,.webp", required=False, preview="newPreview") }}
+        <img id="newPreview" alt="Selected image preview" hidden style="border-radius:var(--radius);border:1px solid var(--border);max-height:220px;object-fit:cover;width:100%">
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" type="submit"><i class="fas fa-bullhorn"></i>Publish</button></div>
+    </form>
+  </section>
+
+  <section class="span-7">
+    <div class="row-between" style="margin-bottom:14px">
+      <h2 style="font-size:var(--text-lg)">Published <span class="subtle">({{ announcements|length }})</span></h2>
+      {% if announcements %}<div class="input-icon" data-filters="annList" style="width:min(260px,100%)"><i class="fas fa-magnifying-glass"></i><input class="input input-sm" type="search" placeholder="Search…" data-filter="q" aria-label="Search announcements"></div>{% endif %}
+    </div>
+    {% if announcements %}
+    <div class="stack" id="annList">
+      {% for ann in announcements %}
+      {% set img = url_for('static', filename=ann.image_path.split('static/')[-1]) if ann.image_path else '' %}
+      <article class="card ann-card" data-row data-search="{{ ann.title }} {{ ann.body }}" data-id="{{ ann.id }}">
+        <div style="display:flex;gap:0;flex-wrap:wrap">
+          {% if img %}<a href="{{ img }}" target="_blank" rel="noopener" style="flex:0 0 200px;max-width:100%"><img src="{{ img }}" alt="" loading="lazy" style="width:100%;height:100%;min-height:140px;object-fit:cover"></a>{% endif %}
+          <div class="ann-content" style="flex:1 1 260px">
+            <div class="row-between">
+              <div class="ann-meta"><span><i class="far fa-calendar"></i> {{ ann.created_at|datefmt('%b %d, %Y · %I:%M %p') }}</span></div>
+              <div class="row" style="--gap:4px">
+                <button class="btn btn-ghost btn-icon btn-sm" type="button" title="Edit" aria-label="Edit {{ ann.title }}" data-edit
+                  data-id="{{ ann.id }}" data-title="{{ ann.title }}" data-body="{{ ann.body }}" data-image="{{ img }}"><i class="fas fa-pen"></i></button>
+                <button class="btn btn-ghost btn-icon btn-sm" type="button" title="Delete" aria-label="Delete {{ ann.title }}" data-delete="{{ ann.id }}" data-title="{{ ann.title }}" style="color:var(--danger-600)"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+            <h3>{{ ann.title }}</h3>
+            <p class="ann-body clamp-3">{{ ann.body }}</p>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    <div class="card" data-filter-empty="annList" hidden>{{ ui.empty_state("No matches", icon="fa-magnifying-glass") }}</div>
+    {% else %}
+    <div class="card">{{ ui.empty_state("Nothing published yet", "Your first announcement will show up here and on every student's portal.") }}</div>
+    {% endif %}
+  </section>
+</div>
+
+<div class="modal" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editTitle" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-head"><div><h2 id="editTitle">Edit announcement</h2><p>Changes are visible to students right away.</p></div><button class="btn btn-ghost btn-icon btn-sm" data-modal-close aria-label="Close"><i class="fas fa-xmark"></i></button></div>
+    <form id="editForm" enctype="multipart/form-data" data-ajax style="display:contents">
+      <div class="modal-body stack" style="--gap:16px">
+        <div class="field"><label class="label" for="e_title">Title</label><input class="input" id="e_title" name="title" minlength="3" maxlength="255" required></div>
+        <div class="field"><label class="label" for="e_body">Content</label><textarea class="textarea" id="e_body" name="body" rows="6" maxlength="5000" required></textarea></div>
+        <div class="field">
+          <span class="label">Image</span>
+          <img id="e_current" alt="Current image" hidden style="border-radius:var(--radius);border:1px solid var(--border);max-height:200px;object-fit:cover;width:100%">
+          <label class="switch" id="e_remove_wrap" hidden><input type="checkbox" name="remove_image" value="1"><span class="switch-track"></span><span style="font-size:var(--text-sm)">Remove current image</span></label>
+          {{ ui.dropzone("e_image", "Replace image", "PNG, JPG, GIF or WEBP", "fa-image", accept=".png,.jpg,.jpeg,.gif,.webp", required=False, preview="e_preview") }}
+          <img id="e_preview" alt="New image preview" hidden style="border-radius:var(--radius);border:1px solid var(--border);max-height:200px;object-fit:cover;width:100%">
+        </div>
+      </div>
+      <div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit"><i class="fas fa-floppy-disk"></i>Save changes</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const modal = document.getElementById("editModal");
+  const form = document.getElementById("editForm");
+  const current = document.getElementById("e_current");
+  const removeWrap = document.getElementById("e_remove_wrap");
+  let editId = null;
+
+  document.addEventListener("click", async (e) => {
+    const edit = e.target.closest("[data-edit]");
+    if (edit) {
+      editId = edit.dataset.id;
+      form.elements.title.value = edit.dataset.title;
+      form.elements.body.value = edit.dataset.body;
+      form.elements.remove_image.checked = false;
+      current.hidden = removeWrap.hidden = !edit.dataset.image;
+      if (edit.dataset.image) current.src = edit.dataset.image;
+      const clear = form.querySelector(".dropzone-clear");
+      if (clear && !clear.hidden) clear.click();
+      Fox.openModal(modal);
+      return;
+    }
+    const del = e.target.closest("[data-delete]");
+    if (del) {
+      const ok = await Fox.confirm({ title: "Delete announcement?", message: `"${del.dataset.title}" will be removed for all students. This can't be undone.`, confirmText: "Delete", tone: "danger" });
+      if (!ok) return;
+      try {
+        const res = await Fox.api(`/admin/delete_announcement/${del.dataset.delete}`, { method: "DELETE" });
+        const card = del.closest(".ann-card");
+        card.style.transition = "opacity .25s, transform .25s";
+        card.style.opacity = "0";
+        card.style.transform = "scale(.98)";
+        setTimeout(() => card.remove(), 250);
+        Fox.toast(res.message, "success");
+      } catch (err) {
+        Fox.toast(err.message, "danger");
+      }
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const btn = form.querySelector('[type="submit"]');
+    const data = new FormData(form);
+    const file = data.get("e_image");
+    data.delete("e_image");
+    if (file && file.size) data.append("image", file);
+    Fox.setLoading(btn, true);
+    const imageChanged = (file && file.size) || form.elements.remove_image.checked;
+    try {
+      const res = await Fox.api(`/admin/edit_announcement/${editId}`, { method: "POST", body: data });
+      Fox.closeModal(modal);
+      if (imageChanged) {
+        Fox.toastAfterReload(res.message);
+        window.location.reload();
+        return;
+      }
+      // Update the card in place.
+      const card = document.querySelector(`.ann-card[data-id="${editId}"]`);
+      const title = form.elements.title.value.trim(), body = form.elements.body.value.trim();
+      card.querySelector("h3").textContent = title;
+      card.querySelector(".ann-body").textContent = body;
+      card.dataset.search = `${title} ${body}`;
+      Object.assign(card.querySelector("[data-edit]").dataset, { title, body });
+      card.querySelector("[data-delete]").dataset.title = title;
+      Fox.toast(res.message, "success");
+    } catch (err) {
+      Fox.toast(err.message, "danger");
+    } finally {
+      Fox.setLoading(btn, false);
+    }
+  });
+})();
+</script>
+{% endblock %}

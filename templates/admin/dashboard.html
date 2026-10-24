@@ -1,0 +1,87 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Dashboard{% endblock %}
+{% block page_vendor %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">SBO overview</span><h1 class="mt-2">Welcome back, <em>{{ current_user_name }}</em></h1><p>Applications, engagement and activity across the portal.</p></div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('admin.announcements') }}"><i class="fas fa-bullhorn"></i>New announcement</a>
+    <a class="btn btn-primary" href="{{ url_for('admin.applications', status='Pending') }}"><i class="fas fa-file-signature"></i>Review pending ({{ kpis.pending }})</a>
+  </div>
+</div>
+
+{% with action=url_for('admin.dashboard'), year_param='year' %}{% include "partials/term_filter.html" %}{% endwith %}
+
+<div class="grid grid-4">
+  <div class="stat"><div class="stat-top"><span class="stat-label">Awaiting SBO review</span><span class="stat-icon"><i class="fas fa-hourglass-half"></i></span></div><div class="stat-value">{{ kpis.pending }}</div><span class="stat-note">of {{ kpis.applications }} applications{% if current_year != 'All' or current_semester != 'All' %} in this term{% endif %}</span></div>
+  <div class="stat tone-maroon"><div class="stat-top"><span class="stat-label">With the Dean</span><span class="stat-icon"><i class="fas fa-user-tie"></i></span></div><div class="stat-value">{{ kpis.dean_review }}</div><span class="stat-note">For Dean review</span></div>
+  <div class="stat tone-success"><div class="stat-top"><span class="stat-label">Dean's Listers</span><span class="stat-icon"><i class="fas fa-award"></i></span></div><div class="stat-value">{{ kpis.dean_approved }}</div><span class="stat-note">Dean approved</span></div>
+  <div class="stat tone-grey"><div class="stat-top"><span class="stat-label">Registered students</span><span class="stat-icon"><i class="fas fa-user-graduate"></i></span></div><div class="stat-value">{{ kpis.students }}</div><span class="stat-note">{{ kpis.announcements }} announcement{{ '' if kpis.announcements == 1 else 's' }} · {{ kpis.feedback }} feedback</span></div>
+</div>
+
+<div class="grid grid-12 mt-6">
+  <section class="card span-8">
+    <div class="card-header"><div><div class="card-title"><i class="fas fa-chart-column"></i>Dean's Listers per term</div><div class="card-subtitle">Applications approved by the Dean</div></div></div>
+    <div class="card-body"><div class="chart-box"><canvas id="approvedChart" aria-label="Dean approved applications per term" role="img"></canvas></div></div>
+  </section>
+  <section class="card span-4">
+    <div class="card-header"><div class="card-title"><i class="fas fa-chart-pie"></i>Pipeline status</div><a class="card-link" href="{{ url_for('admin.applications') }}">Review <i class="fas fa-arrow-right"></i></a></div>
+    <div class="card-body"><div class="chart-box"><canvas id="statusChart" aria-label="Applications by status" role="img"></canvas></div></div>
+  </section>
+
+  <section class="card span-8">
+    <div class="card-header"><div><div class="card-title"><i class="fas fa-chart-line"></i>Portal activity</div><div class="card-subtitle">Last 12 months</div></div></div>
+    <div class="card-body"><div class="chart-box"><canvas id="activityChart" aria-label="Monthly sign-ups, announcements and feedback" role="img"></canvas></div></div>
+  </section>
+  <section class="card span-4">
+    <div class="card-header"><div class="card-title"><i class="fas fa-graduation-cap"></i>By program</div></div>
+    <div class="card-body"><div class="chart-box"><canvas id="programChart" aria-label="Applications by program" role="img"></canvas></div></div>
+  </section>
+
+  <section class="card span-7">
+    <div class="card-header"><div class="card-title"><i class="fas fa-inbox"></i>Latest applications</div><a class="card-link" href="{{ url_for('admin.applications') }}">All applications <i class="fas fa-arrow-right"></i></a></div>
+    {% if recent_applications %}
+    <ul class="list">
+      {% for app in recent_applications %}
+      <li class="list-item" style="align-items:center">
+        <span class="avatar">{{ app.full_name|initials }}</span>
+        <div style="flex:1;min-width:0"><h4 class="truncate">{{ app.full_name }}</h4><p class="meta">{{ app.course|course_label }} · GWA <span class="gwa">{{ '%.2f'|format(app.gwa) if app.gwa is not none else '—' }}</span> · {{ app.created_at|timeago }}</p></div>
+        {{ ui.status_badge(app.status) }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}{{ ui.empty_state("No applications yet", icon="fa-inbox") }}{% endif %}
+  </section>
+  <section class="card span-5">
+    <div class="card-header"><div class="card-title"><i class="fas fa-comment-dots"></i>Recent feedback</div><a class="card-link" href="{{ url_for('admin.feedback') }}">View all <i class="fas fa-arrow-right"></i></a></div>
+    {% if recent_feedback %}
+    <ul class="list">
+      {% for f in recent_feedback %}
+      <li class="list-item">
+        <span class="avatar {% if f.anonymous %}dark{% else %}orange{% endif %}">{% if f.anonymous %}<i class="fas fa-user-secret"></i>{% else %}{{ (f.fullname or '?')|initials }}{% endif %}</span>
+        <div style="min-width:0"><h4>{{ 'Anonymous' if f.anonymous else (f.fullname or 'Former student') }} <span class="meta">→ {{ f.position }}</span></h4><p class="meta clamp-2">{{ f.feedback }}</p></div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}{{ ui.empty_state("No feedback yet", icon="fa-comment-slash") }}{% endif %}
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+(() => {
+  const c = {{ charts|tojson }};
+  const P = FoxCharts.palette;
+  FoxCharts.bar("approvedChart", c.approved.labels, c.approved.values, { label: "Dean approved", color: P.maroon, emptyText: "No Dean-approved applications for this selection yet." });
+  FoxCharts.doughnut("statusChart", c.status.labels, c.status.values, c.status.keys.map((k) => FoxCharts.statusColors[k]));
+  FoxCharts.lines("activityChart", c.activity.labels, [
+    { label: "Student sign-ups", data: c.activity.signups, color: P.orange },
+    { label: "Announcements", data: c.activity.announcements, color: P.maroon },
+    { label: "Feedback", data: c.activity.feedback, color: P.grey },
+  ]);
+  FoxCharts.bar("programChart", c.programs.labels, c.programs.values, { label: "Applications", color: P.orange, horizontal: true });
+})();
+</script>
+{% endblock %}

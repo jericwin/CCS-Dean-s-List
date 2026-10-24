@@ -1,0 +1,56 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Feedback{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Your voice</span><h1 class="mt-2">Feedback for the <em>SBO</em></h1><p>Tell officers what's working and what isn't. You can stay anonymous.</p></div>
+</div>
+<div class="grid grid-12">
+  <section class="card span-5" style="align-self:start">
+    <div class="card-header"><div class="card-title"><i class="fas fa-pen-to-square"></i>Send feedback</div></div>
+    <form class="card-body stack" style="--gap:18px" method="POST">
+      {{ csrf_field() }}
+      <div class="field">
+        <label class="label" for="position">Feedback for</label>
+        <select class="select" id="position" name="position" required>
+          {% for value, label in domain.FEEDBACK_POSITIONS %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <div class="row-between"><label class="label" for="feedback">Your message</label><span class="help num" id="fbCount"></span></div>
+        <textarea class="textarea" id="feedback" name="feedback" rows="6" minlength="5" maxlength="2000" placeholder="Be specific and constructive — what happened, and what would help?" required data-counter="fbCount"></textarea>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="anonymous">
+        <span class="switch-track"></span>
+        <span><strong style="font-size:var(--text-sm)">Submit anonymously</strong><span class="help" style="display:block">Officers won't see your name. You won't be able to tell which anonymous posts are yours.</span></span>
+      </label>
+      <div class="form-actions"><button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i>Send feedback</button></div>
+    </form>
+  </section>
+
+  <section class="card span-7">
+    <div class="card-header">
+      <div><div class="card-title"><i class="fas fa-comments"></i>Feedback wall</div><div class="card-subtitle">Your named feedback plus everyone's anonymous posts.</div></div>
+      <span class="chip">{{ feedbacks|length }}</span>
+    </div>
+    {% if feedbacks %}
+    {% for f in feedbacks %}
+    <article class="feedback-item">
+      <div class="row-between">
+        <div class="row" style="--gap:10px">
+          <span class="avatar avatar-sm {% if not f.anonymous %}orange{% endif %}">{% if f.anonymous %}<i class="fas fa-user-secret"></i>{% else %}{{ current_user_name|initials }}{% endif %}</span>
+          <div><strong style="font-size:var(--text-sm)">{{ 'Anonymous student' if f.anonymous else 'You' }}</strong><div class="help">{{ f.created_at|datefmt }} · {{ f.created_at|timeago }}</div></div>
+        </div>
+        <span class="badge badge-info plain">{{ dict(domain.FEEDBACK_POSITIONS).get(f.position, f.position) }}</span>
+      </div>
+      <p class="feedback-text">{{ f.feedback }}</p>
+      {% if f.admin_reply %}<div class="reply"><strong><i class="fas fa-reply"></i>SBO reply</strong>{{ f.admin_reply }}</div>{% endif %}
+    </article>
+    {% endfor %}
+    {% else %}
+      {{ ui.empty_state("No feedback yet", "Be the first to share your thoughts with the SBO.") }}
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

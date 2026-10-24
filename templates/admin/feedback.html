@@ -1,0 +1,57 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Feedback{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Student voice</span><h1 class="mt-2">Student <em>feedback</em></h1><p>Read what students are saying and reply — replies appear on the student's feedback wall.</p></div>
+</div>
+
+<div class="card filter-bar" style="margin-bottom:20px;align-items:center">
+  <div class="segmented" role="tablist" aria-label="Filter by position">
+    <a href="{{ url_for('admin.feedback') }}" class="{% if position == 'All' %}is-active{% endif %}">All</a>
+    {% for value, label in domain.FEEDBACK_POSITIONS %}<a href="{{ url_for('admin.feedback', position=value) }}" class="{% if position == value %}is-active{% endif %}">{{ label }}</a>{% endfor %}
+  </div>
+  <span class="spacer"></span>
+  <div class="row" style="--gap:8px" data-filters="fbList">
+    <select class="select select-sm" data-filter="replied" aria-label="Reply status" style="width:auto">
+      <option value="all">Any reply status</option><option value="no">Needs a reply</option><option value="yes">Replied</option>
+    </select>
+  </div>
+</div>
+
+{% if feedbacks %}
+<section class="card" id="fbList">
+  {% for f in feedbacks %}
+  <article class="feedback-item" data-row data-replied="{{ 'yes' if f.admin_reply else 'no' }}">
+    <div class="row-between">
+      <div class="row" style="--gap:12px">
+        <span class="avatar {% if f.anonymous %}dark{% else %}orange{% endif %}">{% if f.anonymous %}<i class="fas fa-user-secret"></i>{% else %}{{ (f.fullname or '?')|initials }}{% endif %}</span>
+        <div>
+          <strong style="font-size:var(--text-sm)">{% if f.anonymous %}Anonymous student{% else %}{{ f.fullname or ('Student #' ~ f.student_id) }}{% endif %}</strong>
+          <div class="help">{% if not f.anonymous and f.email %}{{ f.email }} · {% endif %}{{ f.created_at|datefmt('%b %d, %Y · %I:%M %p') }}</div>
+        </div>
+      </div>
+      <div class="row" style="--gap:6px">
+        <span class="badge badge-info plain">{{ dict(domain.FEEDBACK_POSITIONS).get(f.position, f.position) }}</span>
+        {% if f.admin_reply %}<span class="badge badge-success">Replied</span>{% else %}<span class="badge badge-warning">Needs reply</span>{% endif %}
+      </div>
+    </div>
+    <p class="feedback-text">{{ f.feedback }}</p>
+    <details>
+      <summary class="card-link" style="cursor:pointer;list-style:none"><i class="fas fa-reply"></i>{{ 'Edit reply' if f.admin_reply else 'Reply' }}</summary>
+      <form method="POST" class="stack mt-3" style="--gap:10px">
+        {{ csrf_field() }}
+        <input type="hidden" name="feedback_id" value="{{ f.id }}">
+        <textarea class="textarea" name="reply" rows="3" maxlength="2000" placeholder="Write a reply the student will see…" aria-label="Reply">{{ f.admin_reply or '' }}</textarea>
+        <div class="form-actions"><button class="btn btn-primary btn-sm" type="submit"><i class="fas fa-paper-plane"></i>Save reply</button></div>
+      </form>
+    </details>
+    {% if f.admin_reply %}<div class="reply"><strong><i class="fas fa-reply"></i>Your reply</strong>{{ f.admin_reply }}</div>{% endif %}
+  </article>
+  {% endfor %}
+  <div data-filter-empty="fbList" hidden>{{ ui.empty_state("Nothing here", "No feedback matches this filter.", icon="fa-filter") }}</div>
+</section>
+{% else %}
+<div class="card">{{ ui.empty_state("No feedback yet", "Feedback from students will appear here." if position == 'All' else "No feedback for this position yet.", icon="fa-comment-slash") }}</div>
+{% endif %}
+{% endblock %}

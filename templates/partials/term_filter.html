@@ -1,0 +1,21 @@
+{# Academic year + semester filter. Expects: action, years, current_year, current_semester, year_param #}
+<form class="card filter-bar" method="GET" action="{{ action }}" style="margin-bottom:24px">
+  <div class="field">
+    <label class="label" for="f_year">Academic year</label>
+    <select class="select select-sm" id="f_year" name="{{ year_param or 'year' }}">
+      <option value="All">All years</option>
+      {% for y in years %}<option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label class="label" for="f_sem">Semester</label>
+    <select class="select select-sm" id="f_sem" name="semester">
+      <option value="All">All semesters</option>
+      {% for value, label in domain.SEMESTERS %}<option value="{{ value }}" {% if value == current_semester %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="filter-actions">
+    <button class="btn btn-maroon btn-sm" type="submit" style="min-height:38px"><i class="fas fa-filter"></i>Apply</button>
+    {% if current_year != 'All' or current_semester != 'All' %}<a class="btn btn-sm" style="min-height:38px" href="{{ action }}">Reset</a>{% endif %}
+  </div>
+</form>

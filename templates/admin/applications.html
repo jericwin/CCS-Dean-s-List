@@ -1,0 +1,165 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Applications{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">SBO screening</span><h1 class="mt-2">Dean's List <em>applications</em></h1><p>Verify documents and GWA, leave remarks, and endorse qualified students to the Dean.</p></div>
+  <div class="actions"><a class="btn" href="{{ url_for('admin.ranking') }}"><i class="fas fa-ranking-star"></i>Rankings &amp; export</a></div>
+</div>
+
+<form class="card filter-bar" method="GET" action="{{ url_for('admin.applications') }}" style="margin-bottom:16px">
+  <div class="field">
+    <label class="label" for="s_status">Status</label>
+    <select class="select select-sm" id="s_status" name="status" onchange="this.form.requestSubmit()">
+      <option value="All">All statuses</option>
+      {% for s in domain.ALL_STATUSES %}<option value="{{ s }}" {% if s == status_filter %}selected{% endif %}>{{ s|status_label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label class="label" for="s_year">Academic year</label>
+    <select class="select select-sm" id="s_year" name="academic_year" onchange="this.form.requestSubmit()">
+      <option value="All">All years</option>
+      {% for y in years %}<option value="{{ y }}" {% if y == academic_year_filter %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label class="label" for="s_sem">Semester</label>
+    <select class="select select-sm" id="s_sem" name="semester" onchange="this.form.requestSubmit()">
+      <option value="All">All semesters</option>
+      {% for value, label in domain.SEMESTERS %}<option value="{{ value }}" {% if value == semester_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <noscript><button class="btn btn-sm" type="submit">Apply</button></noscript>
+</form>
+
+<section class="card">
+  <div class="filter-bar" data-filters="appTable" style="border-bottom:1px solid var(--grey-150)">
+    <div class="field grow">
+      <label class="label" for="q">Search</label>
+      <div class="input-icon"><i class="fas fa-magnifying-glass"></i><input class="input input-sm" id="q" type="search" placeholder="Student name…" data-filter="q"></div>
+    </div>
+    <div class="field">
+      <label class="label" for="f_program">Program</label>
+      <select class="select select-sm" id="f_program" data-filter="program"><option value="all">All programs</option>{% for p in domain.PROGRAMS %}<option value="{{ p|lower }}">{{ p }}</option>{% endfor %}</select>
+    </div>
+    <div class="field">
+      <label class="label" for="f_course">Section</label>
+      <select class="select select-sm" id="f_course" data-filter="course">{{ ui.course_options(include_all=True) }}</select>
+    </div>
+    <div class="filter-actions"><button class="btn btn-ghost btn-sm" style="min-height:38px" data-filter-reset type="button">Clear</button></div>
+  </div>
+  <div class="card-header" style="padding-top:12px;padding-bottom:12px"><span class="result-count" data-result-count="appTable"></span></div>
+  {% if applications %}
+  <div class="table-wrap">
+    <table class="table stack-mobile" id="appTable" data-sortable>
+      <thead><tr><th data-sort>Student</th><th data-sort>Course</th><th data-sort>Term</th><th data-sort="number">GWA</th><th data-sort>Status</th><th>Documents</th><th class="text-right">Action</th></tr></thead>
+      <tbody>
+        {% for app in applications %}
+        <tr data-row data-search="{{ app.full_name }}" data-program="{{ app.course.split('_')[0]|lower }}" data-course="{{ app.course|lower }}">
+          <td class="cell-main" data-value="{{ app.full_name }}"><div class="cell-person"><span class="avatar">{{ app.full_name|initials }}</span><div><strong>{{ app.full_name }}</strong><span>Submitted {{ app.created_at|datefmt }}</span></div></div></td>
+          <td data-label="Course">{{ app.course|course_label }}</td>
+          <td data-label="Term" data-value="{{ app.academic_year or '' }} {{ app.semester or '' }}" class="nowrap">{{ app.academic_year or '—' }} · {{ app.semester or '—' }}</td>
+          <td data-label="GWA" data-value="{{ app.gwa if app.gwa is not none else '' }}"><span class="gwa">{{ '%.2f'|format(app.gwa) if app.gwa is not none else '—' }}</span></td>
+          <td data-label="Status" data-value="{{ app.status }}">{{ ui.status_badge(app.status) }}</td>
+          <td data-label="Files">{{ ui.doc_links(app) }}</td>
+          <td data-label="" class="text-right">
+            <button class="btn btn-sm {% if app.status == 'Pending' %}btn-primary{% endif %}" type="button" data-review
+              data-id="{{ app.id }}" data-name="{{ app.full_name }}" data-course="{{ app.course|course_label }}"
+              data-year="{{ app.academic_year or '—' }}" data-sem="{{ app.semester or '—' }}" data-status="{{ app.status }}"
+              data-status-label="{{ app.status|status_label }}" data-gwa="{{ '%.2f'|format(app.gwa) if app.gwa is not none else '' }}"
+              data-comment="{{ app.admin_comment if app.admin_comment and app.admin_comment != 'None' else '' }}"
+              data-cog="{{ url_for('files.view_file', application_id=app.id, file_type='cog') if app.cog_filename else '' }}"
+              data-coe="{{ url_for('files.view_file', application_id=app.id, file_type='coe') if app.coe_filename else '' }}"
+              data-linked="{{ 1 if app.student_id else 0 }}">
+              <i class="fas fa-magnifying-glass"></i>Review
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div data-filter-empty="appTable" hidden>{{ ui.empty_state("No matches", "Try a different name, program or section.", icon="fa-magnifying-glass") }}</div>
+  {% else %}
+    {{ ui.empty_state("No applications found", "Nothing matches these filters yet." if status_filter != 'All' or academic_year_filter != 'All' or semester_filter != 'All' else "Student applications will appear here as they come in.") }}
+  {% endif %}
+</section>
+
+<div class="modal" id="reviewModal" role="dialog" aria-modal="true" aria-labelledby="reviewTitle" aria-hidden="true">
+  <div class="modal-dialog wide">
+    <div class="modal-head">
+      <div><h2 id="reviewTitle">Review application</h2><p data-f="name"></p></div>
+      <button class="btn btn-ghost btn-icon btn-sm" data-modal-close aria-label="Close"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.applications') }}" id="reviewForm" style="display:contents">
+      {{ csrf_field() }}
+      <input type="hidden" name="app_id">
+      <div class="modal-body stack" style="--gap:18px">
+        <dl class="facts" style="margin:0">
+          <div class="fact"><dt>Course</dt><dd data-f="course"></dd></div>
+          <div class="fact"><dt>Term</dt><dd><span data-f="year"></span> · <span data-f="sem"></span> semester</dd></div>
+          <div class="fact"><dt>Current status</dt><dd data-f="statusLabel"></dd></div>
+          <div class="fact"><dt>Documents</dt><dd class="row" style="--gap:6px">
+            <a class="btn btn-soft btn-sm" data-f="cog" target="_blank" rel="noopener"><i class="fas fa-file-lines"></i>Open COG</a>
+            <a class="btn btn-soft btn-sm" data-f="coe" target="_blank" rel="noopener"><i class="fas fa-file-lines"></i>Open COE</a>
+          </dd></div>
+        </dl>
+        <div class="alert alert-warning" data-f="locked" hidden><i class="fas fa-lock"></i><span>The Dean has already decided on this application, so it can't be changed here.</span></div>
+        <div class="alert alert-warning" data-f="unlinked" hidden><i class="fas fa-link-slash"></i><span>No student account is linked to this application, so the student won't receive a notification.</span></div>
+        <div class="form-grid" data-f="fields">
+          <div class="field">
+            <label class="label" for="m_status">Decision</label>
+            <select class="select" id="m_status" name="status" required>
+              {% for s in domain.ADMIN_SETTABLE_STATUSES %}<option value="{{ s }}">{{ s|status_label }}{% if s == 'For Dean Review' %} (endorse){% endif %}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label class="label" for="m_gwa">Verified GWA</label>
+            <input class="input num" id="m_gwa" type="number" name="gwa" min="1" max="5" step="0.01" required>
+          </div>
+          <div class="field full">
+            <div class="row-between"><label class="label" for="m_comment">Remarks to the student</label><span class="help num" id="m_count"></span></div>
+            <textarea class="textarea" id="m_comment" name="comment" rows="3" maxlength="2000" placeholder="Optional — e.g. which document needs to be resubmitted" data-counter="m_count"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" type="button" data-modal-close>Cancel</button>
+        <button class="btn btn-primary" type="submit" data-f="submit"><i class="fas fa-check"></i>Save &amp; notify student</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const modal = document.getElementById("reviewModal");
+  const form = document.getElementById("reviewForm");
+  const f = (k) => modal.querySelector(`[data-f="${k}"]`);
+  const locked = ["Dean Approved", "Dean Rejected"];
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-review]");
+    if (!btn) return;
+    const d = btn.dataset;
+    form.elements.app_id.value = d.id;
+    ["name", "course", "year", "sem", "statusLabel"].forEach((k) => (f(k).textContent = d[k]));
+    for (const kind of ["cog", "coe"]) {
+      const link = f(kind);
+      link.hidden = !d[kind];
+      if (d[kind]) link.href = d[kind];
+    }
+    const isLocked = locked.includes(d.status);
+    f("locked").hidden = !isLocked;
+    f("unlinked").hidden = d.linked === "1";
+    f("fields").hidden = isLocked;
+    f("submit").hidden = isLocked;
+    form.elements.status.value = locked.includes(d.status) ? "Pending" : d.status;
+    form.elements.gwa.value = d.gwa;
+    form.elements.comment.value = d.comment;
+    form.elements.comment.dispatchEvent(new Event("input"));
+    Fox.openModal(modal);
+  });
+})();
+</script>
+{% endblock %}

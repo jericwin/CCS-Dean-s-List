@@ -1,0 +1,45 @@
+{% extends "layouts/auth.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Create account{% endblock %}
+{% block art_copy %}
+<span class="eyebrow">Join the den</span>
+<h2 class="mt-3">Your grades did<br>the work. <em>Get the credit.</em></h2>
+<p>Create your student account to apply for the CCS Dean's List and follow your application through every review.</p>
+{% endblock %}
+{% block card %}
+<a class="auth-back" href="{{ url_for('public.index') }}"><i class="fas fa-arrow-left"></i>Back to home</a>
+<span class="role-tag"><i class="fas fa-user-graduate"></i>Student portal</span>
+<h1>Create your account</h1>
+<p class="lead">It takes less than a minute.</p>
+<form method="POST" class="stack" data-validate>
+  {{ csrf_field() }}
+  <div class="field {% if errors and errors.fullname %}is-invalid{% endif %}">
+    <label class="label" for="fullname">Full name</label>
+    <div class="input-icon"><i class="fas fa-user"></i>
+      <input class="input" type="text" id="fullname" name="fullname" value="{{ form.fullname or '' }}" placeholder="e.g. Juan Dela Cruz" autocomplete="name" minlength="3" maxlength="120" required autofocus>
+    </div>
+    <span class="help">Use the name on your school records — it appears on the Dean's List.</span>
+    {{ ui.field_error(errors, "fullname") }}
+  </div>
+  <div class="field {% if errors and errors.email %}is-invalid{% endif %}">
+    <label class="label" for="email">Email address</label>
+    <div class="input-icon"><i class="fas fa-envelope"></i>
+      <input class="input" type="email" id="email" name="email" value="{{ form.email or '' }}" placeholder="you@example.com" autocomplete="email" maxlength="255" required>
+    </div>
+    {{ ui.field_error(errors, "email") }}
+  </div>
+  <div class="field {% if errors and errors.password %}is-invalid{% endif %}">
+    <label class="label" for="password">Password</label>
+    {{ ui.password_input("password", "password", "At least 8 characters", "new-password", 'minlength="8" maxlength="128"') }}
+    <div class="strength" data-strength-for="password" data-score="0"><i></i><i></i><i></i><i></i></div>
+    <span class="help">Use at least 8 characters.</span>
+    {{ ui.field_error(errors, "password") }}
+  </div>
+  <div class="field">
+    <label class="label" for="confirm_password">Confirm password</label>
+    {{ ui.password_input("confirm_password", "confirm_password", "Repeat your password", "new-password", 'data-match="password"') }}
+  </div>
+  <button class="btn btn-primary btn-lg btn-block mt-2" type="submit">Create account <i class="fas fa-arrow-right"></i></button>
+</form>
+<p class="auth-switch">Already registered? <a href="{{ url_for('public.login') }}">Sign in</a></p>
+{% endblock %}

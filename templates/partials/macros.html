@@ -1,0 +1,88 @@
+{# Reusable UI building blocks. Import with: {% import "partials/macros.html" as ui with context %} #}
+
+{# Geometric low-poly fox — the decorative mascot motif. The SBO logo remains the brand mark. #}
+{% macro fox_art(cls="", label="") -%}
+<svg class="fox-art {{ cls }}" viewBox="0 0 240 216" {% if label %}role="img" aria-label="{{ label }}"{% else %}aria-hidden="true"{% endif %} xmlns="http://www.w3.org/2000/svg">
+  <path class="f-ear" d="M30 8 92 70 40 108Z"/>
+  <path class="f-ear-in" d="M44 34 80 72 49 95Z"/>
+  <path class="f-ear" d="M210 8 148 70 200 108Z"/>
+  <path class="f-ear-in" d="M196 34 160 72 191 95Z"/>
+  <path class="f-head-3" d="M92 70h56l-28 48Z"/>
+  <path class="f-head" d="M40 108 92 70l28 48Z"/>
+  <path class="f-head-2" d="M200 108 148 70l-28 48Z"/>
+  <path class="f-cheek" d="M18 128 40 108l80 10-36 32Z"/>
+  <path class="f-cheek-2" d="M222 128 200 108l-80 10 36 32Z"/>
+  <path class="f-cheek-2" d="M18 128 84 150l36 56Z"/>
+  <path class="f-cheek" d="M222 128 156 150l-36 56Z"/>
+  <path class="f-cheek" d="M84 150 120 118l-16 42 16 46Z"/>
+  <path class="f-cheek-2" d="M156 150 120 118l16 42-16 46Z"/>
+  <path class="f-head" d="M120 118 104 160l16 46 16-46Z"/>
+  <path class="f-head-2" d="M120 118l16 42-16 46Z"/>
+  <path class="f-dark" d="M68 119 98 126 80 134Z"/>
+  <path class="f-dark" d="M172 119 142 126 160 134Z"/>
+  <path class="f-dark" d="M108 192h24l-12 15Z"/>
+</svg>
+{%- endmacro %}
+
+{% macro status_badge(status) -%}
+<span class="badge badge-{{ status|status_tone }}">{{ status|status_label }}</span>
+{%- endmacro %}
+
+{% macro empty_state(title, text="", icon=None, action_url=None, action_label=None) -%}
+<div class="empty">
+  {% if icon %}<div class="list-icon" style="width:56px;height:56px;border-radius:16px;font-size:1.3rem"><i class="fas {{ icon }}"></i></div>{% else %}{{ fox_art() }}{% endif %}
+  <h3>{{ title }}</h3>
+  {% if text %}<p>{{ text }}</p>{% endif %}
+  {% if action_url %}<a class="btn btn-primary mt-2" href="{{ action_url }}">{{ action_label }}</a>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro field_error(errors, key) -%}
+{% if errors and errors.get(key) %}<span class="field-error" id="{{ key }}-error"><i class="fas fa-circle-exclamation"></i>{{ errors[key] }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro password_input(name, id, placeholder="", autocomplete="current-password", extra="") -%}
+<div class="password-wrap">
+  <input class="input" type="password" name="{{ name }}" id="{{ id }}" placeholder="{{ placeholder }}" autocomplete="{{ autocomplete }}" required {{ extra|safe }}>
+  <button class="password-toggle" type="button" aria-label="Show password"><i class="fas fa-eye"></i></button>
+</div>
+{%- endmacro %}
+
+{% macro course_options(selected="", include_all=False) -%}
+{% if include_all %}<option value="all">All sections</option>{% else %}<option value="" disabled {% if not selected %}selected{% endif %}>Select course &amp; section</option>{% endif %}
+{% for program, courses in domain.COURSES %}
+<optgroup label="{{ program }}">
+  {% for value, label in courses %}<option value="{{ value }}" {% if value == selected %}selected{% endif %}>{{ label }}</option>{% endfor %}
+</optgroup>
+{% endfor %}
+{%- endmacro %}
+
+{% macro dropzone(name, title, hint, icon="fa-file-arrow-up", accept=".pdf,.png,.jpg,.jpeg", required=True, preview=None, max_mb=10) -%}
+<label class="dropzone" {% if preview %}data-preview="{{ preview }}"{% endif %} data-max-mb="{{ max_mb }}">
+  <input type="file" name="{{ name }}" id="{{ name }}" accept="{{ accept }}" {% if required %}required{% endif %}>
+  <span class="dropzone-icon"><i class="fas {{ icon }}"></i></span>
+  <span class="dropzone-text">
+    <span class="dropzone-title">{{ title }}</span>
+    <span class="dropzone-meta">{{ hint }}</span>
+  </span>
+  <button type="button" class="btn btn-ghost btn-sm dropzone-clear" hidden aria-label="Remove file"><i class="fas fa-xmark"></i></button>
+</label>
+{%- endmacro %}
+
+{% macro doc_links(app, size="btn-sm") -%}
+<div class="row" style="--gap:6px;flex-wrap:nowrap">
+  {% if app.cog_filename %}<a class="btn btn-soft {{ size }}" href="{{ url_for('files.view_file', application_id=app.id, file_type='cog') }}" target="_blank" rel="noopener" title="Certificate of Grades"><i class="fas fa-file-lines"></i>COG</a>{% endif %}
+  {% if app.coe_filename %}<a class="btn btn-soft {{ size }}" href="{{ url_for('files.view_file', application_id=app.id, file_type='coe') }}" target="_blank" rel="noopener" title="Certificate of Enrollment"><i class="fas fa-file-lines"></i>COE</a>{% endif %}
+  {% if not app.cog_filename and not app.coe_filename %}<span class="subtle">No files</span>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro progress(status) -%}
+{% set s = status %}
+<div class="progress-steps" aria-label="Application progress">
+  <div class="p-step done">Submitted</div>
+  <div class="p-step {% if s == 'Pending' %}current{% elif s == 'Rejected' %}failed{% else %}done{% endif %}">SBO review</div>
+  <div class="p-step {% if s == 'For Dean Review' %}current{% elif s == 'Dean Rejected' %}failed{% elif s == 'Dean Approved' %}done{% endif %}">Dean review</div>
+  <div class="p-step {% if s == 'Dean Approved' %}done{% endif %}">Dean's Lister</div>
+</div>
+{%- endmacro %}

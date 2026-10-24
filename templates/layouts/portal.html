@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% set role_labels = {"student": "Student", "admin": "SBO Admin", "dean": "Dean"} %}
+{% set home = {"student": "student.dashboard", "admin": "admin.dashboard", "dean": "dean.dashboard"}[current_role] %}
+{% set logout = {"student": "public.logout", "admin": "public.admin_logout", "dean": "public.dean_logout"}[current_role] %}
+
+{% block body_class %}portal role-{{ current_role }}{% endblock %}
+
+{% block body %}
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Primary">
+    <a class="brand" href="{{ url_for(home) }}">
+      <img class="brand-logo" src="{{ url_for('static', filename='logo.png') }}" alt="CCS Student Body Organization logo">
+      <span class="brand-text"><strong>Dean's List</strong><span>{{ role_labels[current_role] }} portal</span></span>
+    </a>
+    <div class="sidebar-section">Menu</div>
+    <nav class="nav">
+      {% for item in nav_items %}
+      {% set active = request.endpoint == item.endpoint %}
+      <a class="nav-link {% if active %}is-active{% endif %}" href="{{ url_for(item.endpoint) }}" {% if active %}aria-current="page"{% endif %}>
+        <i class="fas {{ item.icon }}" aria-hidden="true"></i><span>{{ item.label }}</span>
+        {% if item.badge is defined %}<span class="count-pill" data-badge="{{ item.badge_id or item.endpoint }}" {% if not item.badge %}hidden{% endif %}>{{ item.badge if item.badge < 100 else '99+' }}</span>{% endif %}
+      </a>
+      {% endfor %}
+    </nav>
+    {{ ui.fox_art("sidebar-fox") }}
+    <div class="sidebar-foot">
+      <div class="sidebar-card">
+        <span class="avatar">{{ current_user_name|initials }}</span>
+        <div style="min-width:0"><strong class="truncate">{{ current_user_name }}</strong><span>{{ role_labels[current_role] }}</span></div>
+        <a class="btn btn-ghost btn-icon btn-sm" href="{{ url_for(logout) }}" title="Sign out" aria-label="Sign out"><i class="fas fa-arrow-right-from-bracket"></i></a>
+      </div>
+    </div>
+  </aside>
+  <div class="scrim" data-nav-close></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn burger" type="button" data-nav-toggle aria-controls="sidebar" aria-expanded="false" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+      <div class="crumbs">
+        <span class="crumb-parent">{{ role_labels[current_role] }}</span><i class="fas fa-chevron-right"></i>
+        <strong class="truncate">{% block crumb %}{{ self.title() }}{% endblock %}</strong>
+      </div>
+      <div class="topbar-actions">
+        {% block topbar_actions %}{% endblock %}
+        {% if current_role == 'student' %}
+        <a class="icon-btn" href="{{ url_for('student.notifications') }}" aria-label="Notifications" title="Notifications">
+          <i class="fas fa-bell"></i>{% for i in nav_items if i.badge_id == 'notifBadge' and i.badge %}<span class="dot"></span>{% endfor %}
+        </a>
+        {% endif %}
+        <div class="dropdown" data-dropdown>
+          <button class="user-chip" type="button" data-dropdown-trigger aria-haspopup="menu" aria-expanded="false">
+            <span class="avatar avatar-sm orange">{{ current_user_name|initials }}</span>
+            <span class="name truncate">{{ current_user_name }}</span>
+            <i class="fas fa-chevron-down subtle" style="font-size:11px"></i>
+          </button>
+          <div class="dropdown-menu" role="menu">
+            <div class="dropdown-header"><strong>{{ current_user_name }}</strong><span>{{ role_labels[current_role] }}{% if session.get('email') %} · {{ session.get('email') }}{% endif %}</span></div>
+            {% if current_role == 'student' %}<a class="dropdown-item" href="{{ url_for('student.settings') }}" role="menuitem"><i class="fas fa-gear"></i>Account settings</a>{% endif %}
+            {% if current_role == 'admin' %}<a class="dropdown-item" href="{{ url_for('admin.settings') }}" role="menuitem"><i class="fas fa-gear"></i>Settings</a>{% endif %}
+            <a class="dropdown-item danger" href="{{ url_for(logout) }}" role="menuitem"><i class="fas fa-arrow-right-from-bracket"></i>Sign out</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="main">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block vendor_scripts %}
+{% if current_role in ('student', 'admin') %}<script src="https://cdn.socket.io/4.7.4/socket.io.min.js" crossorigin="anonymous"></script>{% endif %}
+{% block page_vendor %}{% endblock %}
+{% endblock %}

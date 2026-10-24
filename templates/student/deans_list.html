@@ -1,0 +1,97 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Dean's List application{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <span class="eyebrow">Apply</span>
+    <h1 class="mt-2">Dean's List <em>application</em></h1>
+    <p>Submit one application per academic year and semester. Accepted files: PDF, PNG or JPG up to {{ config.MAX_CONTENT_LENGTH // 1048576 }} MB in total.</p>
+  </div>
+</div>
+
+<div class="grid grid-12">
+  <section class="card span-7">
+    <div class="card-header"><div><div class="card-title"><i class="fas fa-file-signature"></i>Application form</div><div class="card-subtitle">All fields are required.</div></div></div>
+    <form class="card-body stack" style="--gap:20px" method="POST" action="{{ url_for('student.deans_list') }}" enctype="multipart/form-data" id="applyForm">
+      {{ csrf_field() }}
+      <div class="field">
+        <label class="label" for="fullname">Full name</label>
+        <input class="input" id="fullname" value="{{ session.get('full_name') }}" readonly aria-describedby="fullname-help">
+        <span class="help" id="fullname-help">Taken from your account. Contact the SBO if it's wrong.</span>
+      </div>
+      <div class="form-grid">
+        <div class="field full {% if errors.course %}is-invalid{% endif %}">
+          <label class="label" for="course">Course &amp; section <span class="req">*</span></label>
+          <select class="select" id="course" name="course" required>{{ ui.course_options(form.course) }}</select>
+          {{ ui.field_error(errors, "course") }}
+        </div>
+        <div class="field {% if errors.academic_year %}is-invalid{% endif %}">
+          <label class="label" for="academic_year">Academic year <span class="req">*</span></label>
+          <select class="select" id="academic_year" name="academic_year" required>
+            {% for y in years %}<option value="{{ y }}" {% if y == form.academic_year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+          </select>
+          {{ ui.field_error(errors, "academic_year") }}
+        </div>
+        <div class="field {% if errors.semester %}is-invalid{% endif %}">
+          <label class="label" for="semester">Semester <span class="req">*</span></label>
+          <select class="select" id="semester" name="semester" required>
+            <option value="" disabled {% if not form.semester %}selected{% endif %}>Select semester</option>
+            {% for value, label in domain.SEMESTERS %}<option value="{{ value }}" {% if value == form.semester %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          {{ ui.field_error(errors, "semester") }}
+        </div>
+        <div class="field full {% if errors.gwa %}is-invalid{% endif %}">
+          <label class="label" for="gwa">General Weighted Average (GWA) <span class="req">*</span></label>
+          <input class="input num" type="number" id="gwa" name="gwa" value="{{ form.gwa or '' }}" placeholder="e.g. 1.45" step="0.01" min="1" max="5" inputmode="decimal" required>
+          <span class="help">Use the 1.00 (highest) – 5.00 scale, exactly as shown on your COG.</span>
+          {{ ui.field_error(errors, "gwa") }}
+        </div>
+      </div>
+      <div class="field {% if errors.files %}is-invalid{% endif %}">
+        <span class="label">Supporting documents <span class="req">*</span></span>
+        <div class="stack" style="--gap:10px">
+          {{ ui.dropzone("cog", "Certificate of Grades (COG)", "Click or drop a PDF / image here", "fa-file-lines", max_mb=config.MAX_CONTENT_LENGTH // 1048576) }}
+          {{ ui.dropzone("coe", "Certificate of Enrollment (COE)", "Click or drop a PDF / image here", "fa-id-card", max_mb=config.MAX_CONTENT_LENGTH // 1048576) }}
+        </div>
+        {{ ui.field_error(errors, "files") }}
+      </div>
+      <div class="alert alert-info"><i class="fas fa-shield-halved"></i><span>Your documents are private — only you, SBO officers and the Dean can open them.</span></div>
+      <div class="form-actions">
+        <button class="btn btn-primary btn-lg" type="submit"><i class="fas fa-paper-plane"></i>Submit application</button>
+      </div>
+    </form>
+  </section>
+
+  <aside class="span-5 stack" style="--gap:20px">
+    <section class="card">
+      <div class="card-header"><div class="card-title"><i class="fas fa-list-check"></i>Before you submit</div></div>
+      <ul class="list">
+        <li class="list-item"><span class="list-icon warning"><i class="fas fa-1"></i></span><div><h4>Check your GWA</h4><p class="meta">It must match your Certificate of Grades exactly.</p></div></li>
+        <li class="list-item"><span class="list-icon warning"><i class="fas fa-2"></i></span><div><h4>Clear, complete scans</h4><p class="meta">All pages readable, official marks visible.</p></div></li>
+        <li class="list-item"><span class="list-icon warning"><i class="fas fa-3"></i></span><div><h4>One per term</h4><p class="meta">Duplicate submissions for the same term are blocked.</p></div></li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="card-header"><div class="card-title"><i class="fas fa-clock-rotate-left"></i>Your submissions</div><span class="chip">{{ applications|length }}</span></div>
+      {% if applications %}
+      <ul class="list">
+        {% for app in applications %}
+        <li class="list-item" style="align-items:center">
+          <div style="flex:1;min-width:0">
+            <h4>A.Y. {{ app.academic_year or '—' }} · {{ app.semester or '—' }} sem</h4>
+            <p class="meta">{{ app.course|course_label }} · GWA <span class="gwa">{{ '%.2f'|format(app.gwa) if app.gwa is not none else '—' }}</span> · {{ app.created_at|datefmt }}</p>
+            <div class="mt-2">{{ ui.doc_links(app) }}</div>
+          </div>
+          {{ ui.status_badge(app.status) }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+        {{ ui.empty_state("No submissions yet", "Your first application will appear here.", icon="fa-inbox") }}
+      {% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Rankings{% endblock %}
+{% set export_args = dict(program=program_filter, status=status_filter, academic_year=academic_year_filter, semester=semester_filter) %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Leaderboard</span><h1 class="mt-2">Dean's List <em>rankings</em></h1><p>Ranked by GWA (1.00 is highest). Export the list or forward SBO-approved students to the Dean.</p></div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('admin.ranking', export='excel', **export_args) }}" {% if not applications %}aria-disabled="true" tabindex="-1" style="pointer-events:none"{% endif %}><i class="fas fa-file-excel" style="color:#217346"></i>Excel</a>
+    <a class="btn" href="{{ url_for('admin.ranking', export='pdf', **export_args) }}" data-pdf {% if not applications %}aria-disabled="true" tabindex="-1" style="pointer-events:none"{% endif %}><i class="fas fa-file-pdf" style="color:var(--danger-600)"></i>PDF</a>
+    <form method="POST" action="{{ url_for('admin.send_to_dean') }}"
+          data-confirm="This forwards every SBO-approved application{% if academic_year_filter != 'All' %} for A.Y. {{ academic_year_filter }}{% endif %}{% if semester_filter != 'All' %} ({{ semester_filter }} semester){% endif %} to the Dean and notifies the students."
+          data-confirm-heading="Send to the Dean?" data-confirm-label="Send to Dean">
+      {{ csrf_field() }}
+      <input type="hidden" name="academic_year" value="{{ academic_year_filter }}">
+      <input type="hidden" name="semester" value="{{ semester_filter }}">
+      <button class="btn btn-primary" type="submit" {% if not approved_count %}disabled title="No SBO-approved applications to send"{% endif %}><i class="fas fa-paper-plane"></i>Send approved to Dean{% if approved_count %} ({{ approved_count }}){% endif %}</button>
+    </form>
+  </div>
+</div>
+
+<form class="card filter-bar" method="GET" action="{{ url_for('admin.ranking') }}" style="margin-bottom:20px">
+  <div class="field">
+    <label class="label" for="r_program">Program</label>
+    <select class="select select-sm" id="r_program" name="program">
+      <option value="All">All programs</option>
+      {% for p in domain.PROGRAMS %}<option value="{{ p }}" {% if p == program_filter %}selected{% endif %}>{{ p }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label class="label" for="r_status">Status</label>
+    <select class="select select-sm" id="r_status" name="status">
+      <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All statuses</option>
+      {% for s in domain.ALL_STATUSES %}<option value="{{ s }}" {% if s == status_filter %}selected{% endif %}>{{ s|status_label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label class="label" for="r_year">Academic year</label>
+    <select class="select select-sm" id="r_year" name="academic_year">
+      <option value="All">All years</option>
+      {% for y in years %}<option value="{{ y }}" {% if y == academic_year_filter %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label class="label" for="r_sem">Semester</label>
+    <select class="select select-sm" id="r_sem" name="semester">
+      <option value="All">All semesters</option>
+      {% for value, label in domain.SEMESTERS %}<option value="{{ value }}" {% if value == semester_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="filter-actions"><button class="btn btn-maroon btn-sm" style="min-height:38px" type="submit"><i class="fas fa-filter"></i>Apply</button></div>
+</form>
+
+<section class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-ranking-star"></i>{{ applications|length }} ranked student{{ '' if applications|length == 1 else 's' }}</div>
+    <span class="chip">{{ 'All statuses' if status_filter == 'All' else status_filter|status_label }}</span>
+  </div>
+  {% if applications %}
+  <div class="table-wrap">
+    <table class="table stack-mobile" data-sortable>
+      <thead><tr><th data-sort="number">Rank</th><th data-sort>Student</th><th data-sort>Program</th><th data-sort>Section</th><th data-sort>Term</th><th data-sort="number">GWA</th><th data-sort>Status</th><th>Documents</th></tr></thead>
+      <tbody>
+        {% for app in applications %}
+        <tr data-row>
+          <td data-label="Rank" data-value="{{ loop.index }}"><span class="rank {% if loop.index <= 3 %}rank-{{ loop.index }}{% endif %}">{{ loop.index }}</span></td>
+          <td class="cell-main" data-value="{{ app.full_name }}"><div class="cell-person"><span class="avatar">{{ app.full_name|initials }}</span><div><strong>{{ app.full_name }}</strong><span>{{ app.course|course_label }}</span></div></div></td>
+          <td data-label="Program">{{ domain.course_program(app.course) }}</td>
+          <td data-label="Section">{{ domain.course_section(app.course) }}</td>
+          <td data-label="Term" class="nowrap">{{ app.academic_year or '—' }} · {{ app.semester or '—' }}</td>
+          <td data-label="GWA" data-value="{{ app.gwa }}"><span class="gwa">{{ '%.2f'|format(app.gwa) }}</span></td>
+          <td data-label="Status" data-value="{{ app.status }}">{{ ui.status_badge(app.status) }}</td>
+          <td data-label="Files">{{ ui.doc_links(app) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    {{ ui.empty_state("No ranked students", "No applications with a GWA match these filters. Try another status or term.") }}
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  // PDF export may take a few seconds when the official DL.docx template is converted.
+  document.querySelectorAll("[data-pdf]").forEach((a) => a.addEventListener("click", () => Fox.toast("Preparing PDF… the download will start shortly.", "info", 6000)));
+</script>
+{% endblock %}

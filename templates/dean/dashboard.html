@@ -1,0 +1,65 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Dashboard{% endblock %}
+{% block page_vendor %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>{% endblock %}
+{% block content %}
+<section class="hero-banner">
+  <span class="eyebrow">Office of the Dean</span>
+  <h2 class="mt-2">Good day, {{ current_user_name }}.</h2>
+  <p>{% if kpis.pending %}{{ kpis.pending }} SBO-endorsed application{{ 's are' if kpis.pending != 1 else ' is' }} waiting for your decision.{% else %}No applications are waiting for your decision right now.{% endif %}</p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="{{ url_for('dean.applications') }}"><i class="fas fa-gavel"></i>Review applications</a>
+  </div>
+  {{ ui.fox_art() }}
+</section>
+
+<div class="mt-6">{% with action=url_for('dean.dashboard'), year_param='year' %}{% include "partials/term_filter.html" %}{% endwith %}</div>
+
+<div class="grid grid-4">
+  <div class="stat tone-grey"><div class="stat-top"><span class="stat-label">Endorsed to you</span><span class="stat-icon"><i class="fas fa-inbox"></i></span></div><div class="stat-value">{{ kpis.total }}</div><span class="stat-note">All Dean-stage applications</span></div>
+  <div class="stat tone-maroon"><div class="stat-top"><span class="stat-label">Awaiting decision</span><span class="stat-icon"><i class="fas fa-hourglass-half"></i></span></div><div class="stat-value">{{ kpis.pending }}</div><span class="stat-note">For Dean review</span></div>
+  <div class="stat tone-success"><div class="stat-top"><span class="stat-label">Approved</span><span class="stat-icon"><i class="fas fa-award"></i></span></div><div class="stat-value">{{ kpis.approved }}</div><span class="stat-note">Dean's Listers</span></div>
+  <div class="stat tone-danger"><div class="stat-top"><span class="stat-label">Not approved</span><span class="stat-icon"><i class="fas fa-circle-xmark"></i></span></div><div class="stat-value">{{ kpis.rejected }}</div><span class="stat-note">Dean rejected</span></div>
+</div>
+
+<div class="grid grid-12 mt-6">
+  <section class="card span-8">
+    <div class="card-header"><div><div class="card-title"><i class="fas fa-chart-column"></i>Approved per term</div><div class="card-subtitle">Dean-approved applications by academic year and semester</div></div></div>
+    <div class="card-body"><div class="chart-box"><canvas id="approvedChart" role="img" aria-label="Dean approved per term"></canvas></div></div>
+  </section>
+  <section class="card span-4">
+    <div class="card-header"><div class="card-title"><i class="fas fa-chart-pie"></i>Decisions</div></div>
+    <div class="card-body"><div class="chart-box"><canvas id="statusChart" role="img" aria-label="Decision distribution"></canvas></div></div>
+  </section>
+  <section class="card span-7">
+    <div class="card-header"><div class="card-title"><i class="fas fa-graduation-cap"></i>By course &amp; section</div></div>
+    <div class="card-body"><div class="chart-box"><canvas id="courseChart" role="img" aria-label="Applications by course"></canvas></div></div>
+  </section>
+  <section class="card span-5">
+    <div class="card-header"><div class="card-title"><i class="fas fa-list-ol"></i>Top of the queue</div><a class="card-link" href="{{ url_for('dean.applications') }}">All <i class="fas fa-arrow-right"></i></a></div>
+    {% if awaiting %}
+    <ul class="list">
+      {% for app in awaiting %}
+      <li class="list-item" style="align-items:center">
+        <span class="rank {% if loop.index <= 3 %}rank-{{ loop.index }}{% endif %}">{{ loop.index }}</span>
+        <div style="flex:1;min-width:0"><h4 class="truncate">{{ app.full_name }}</h4><p class="meta">{{ app.course|course_label }} · {{ app.academic_year or '—' }} {{ app.semester or '' }}</p></div>
+        <span class="gwa">{{ '%.2f'|format(app.gwa) if app.gwa is not none else '—' }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}{{ ui.empty_state("Queue is clear", "New endorsements from the SBO will appear here.", icon="fa-check") }}{% endif %}
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+(() => {
+  const c = {{ charts|tojson }};
+  const P = FoxCharts.palette;
+  FoxCharts.bar("approvedChart", c.approved.labels, c.approved.values, { label: "Dean approved", color: P.maroon, emptyText: "No Dean-approved applications for this selection yet." });
+  FoxCharts.doughnut("statusChart", c.status.labels, c.status.values, c.status.keys.map((k) => FoxCharts.statusColors[k]));
+  FoxCharts.bar("courseChart", c.courses.labels.map((v) => v.replace("_", " ").toUpperCase()), c.courses.values, { label: "Applications", color: P.orange });
+})();
+</script>
+{% endblock %}

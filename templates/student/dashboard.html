@@ -1,0 +1,105 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section class="hero-banner">
+  <span class="eyebrow">{{ domain.current_academic_year() }} · Dean's List</span>
+  <h2 class="mt-2">Hi, {{ session.get('first_name', 'there') }}. {% if latest %}Here's where things stand.{% else %}Ready to get recognized?{% endif %}</h2>
+  <p>{% if latest %}Your latest application is <strong style="color:#fff">{{ latest.status|status_label }}</strong>. We'll notify you the moment anything changes.{% else %}Submit your Certificate of Grades and Certificate of Enrollment to apply for this term's Dean's List.{% endif %}</p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="{{ url_for('student.deans_list') }}"><i class="fas fa-plus"></i>New application</a>
+    <a class="btn btn-ghost-light" href="{{ url_for('student.chat') }}"><i class="fas fa-headset"></i>Ask the SBO</a>
+  </div>
+  {{ ui.fox_art() }}
+</section>
+
+<div class="grid grid-4 mt-6">
+  <div class="stat tone-grey"><div class="stat-top"><span class="stat-label">Total applications</span><span class="stat-icon"><i class="fas fa-layer-group"></i></span></div><div class="stat-value">{{ counts.total }}</div><span class="stat-note">All terms</span></div>
+  <div class="stat"><div class="stat-top"><span class="stat-label">Awaiting SBO</span><span class="stat-icon"><i class="fas fa-hourglass-half"></i></span></div><div class="stat-value">{{ counts.pending }}</div><span class="stat-note">Pending screening</span></div>
+  <div class="stat tone-maroon"><div class="stat-top"><span class="stat-label">In progress</span><span class="stat-icon"><i class="fas fa-route"></i></span></div><div class="stat-value">{{ counts.progress }}</div><span class="stat-note">SBO approved / with the Dean</span></div>
+  <div class="stat tone-success"><div class="stat-top"><span class="stat-label">Dean's Lister</span><span class="stat-icon"><i class="fas fa-award"></i></span></div><div class="stat-value">{{ counts.approved }}</div><span class="stat-note">{{ counts.rejected }} not approved</span></div>
+</div>
+
+<div class="grid grid-12 mt-6">
+  <section class="card span-8">
+    <div class="card-header">
+      <div><div class="card-title"><i class="fas fa-route"></i>Latest application</div>
+      {% if latest %}<div class="card-subtitle">{{ latest.course|course_label }} · A.Y. {{ latest.academic_year or '—' }} · {{ latest.semester or '—' }} semester</div>{% endif %}</div>
+      {% if latest %}{{ ui.status_badge(latest.status) }}{% endif %}
+    </div>
+    <div class="card-body">
+      {% if latest %}
+        {{ ui.progress(latest.status) }}
+        <div class="facts mt-6">
+          <div class="fact"><dt>GWA</dt><dd class="gwa">{{ '%.2f'|format(latest.gwa) if latest.gwa is not none else '—' }}</dd></div>
+          <div class="fact"><dt>Submitted</dt><dd>{{ latest.created_at|datefmt }}</dd></div>
+        </div>
+        {% if latest.admin_comment and latest.admin_comment != 'None' %}
+        <div class="reply mt-4"><strong><i class="fas fa-comment"></i>Reviewer remarks</strong>{{ latest.admin_comment }}</div>
+        {% endif %}
+      {% else %}
+        {{ ui.empty_state("No applications yet", "When you apply, you'll be able to follow each review step right here.", action_url=url_for('student.deans_list'), action_label="Apply for the Dean's List") }}
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card span-4">
+    <div class="card-header"><div class="card-title"><i class="fas fa-bell"></i>Recent updates</div><a class="card-link" href="{{ url_for('student.notifications') }}">All <i class="fas fa-arrow-right"></i></a></div>
+    {% if notifications %}
+    <ul class="list">
+      {% for n in notifications %}
+      <li class="list-item">
+        <span class="list-icon {{ n.app_status|status_tone if n.app_status else '' }}"><i class="fas {% if n.app_status and n.app_status|status_tone == 'success' %}fa-check{% elif n.app_status and n.app_status|status_tone == 'danger' %}fa-xmark{% else %}fa-bell{% endif %}"></i></span>
+        <div style="min-width:0"><p class="clamp-2" style="font-size:var(--text-sm)">{{ n.message.split('\n')[0] }}</p><span class="meta">{{ n.created_at|timeago }}</span></div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      {{ ui.empty_state("You're all caught up", icon="fa-bell") }}
+    {% endif %}
+  </section>
+
+  <section class="card span-12">
+    <div class="card-header"><div class="card-title"><i class="fas fa-folder-open"></i>My applications</div><a class="btn btn-soft btn-sm" href="{{ url_for('student.deans_list') }}"><i class="fas fa-plus"></i>New</a></div>
+    {% if applications %}
+    <div class="table-wrap">
+      <table class="table stack-mobile" data-sortable>
+        <thead><tr><th data-sort>Academic year</th><th data-sort>Semester</th><th data-sort>Course</th><th data-sort="number">GWA</th><th data-sort>Status</th><th>Documents</th></tr></thead>
+        <tbody>
+          {% for app in applications %}
+          <tr data-row>
+            <td class="cell-main" data-label="Year"><strong>{{ app.academic_year or '—' }}</strong></td>
+            <td data-label="Semester">{{ app.semester or '—' }}</td>
+            <td data-label="Course">{{ app.course|course_label }}</td>
+            <td data-label="GWA" data-value="{{ app.gwa if app.gwa is not none else '' }}"><span class="gwa">{{ '%.2f'|format(app.gwa) if app.gwa is not none else '—' }}</span></td>
+            <td data-label="Status" data-value="{{ app.status }}">{{ ui.status_badge(app.status) }}</td>
+            <td data-label="Files">{{ ui.doc_links(app) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      {{ ui.empty_state("Nothing submitted yet", "Your applications and their documents will be listed here.", icon="fa-folder-open") }}
+    {% endif %}
+  </section>
+
+  {% if announcements %}
+  <section class="span-12">
+    <div class="row-between" style="margin-bottom:14px"><h2 style="font-size:var(--text-lg)">Latest announcements</h2><a class="card-link" href="{{ url_for('student.announcements') }}">View all <i class="fas fa-arrow-right"></i></a></div>
+    <div class="ann-grid">
+      {% for ann in announcements %}
+      <article class="card ann-card interactive">
+        {% if ann.image_path %}<div class="ann-media"><img src="{{ url_for('static', filename=ann.image_path.split('static/')[-1]) }}" alt="" loading="lazy"></div>{% endif %}
+        <div class="ann-content">
+          <div class="ann-meta"><span><i class="far fa-calendar"></i> {{ ann.created_at|datefmt }}</span></div>
+          <h3>{{ ann.title }}</h3>
+          <p class="ann-body clamp-3">{{ ann.body }}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

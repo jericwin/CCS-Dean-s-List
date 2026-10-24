@@ -1,0 +1,111 @@
+{% extends "layouts/portal.html" %}
+{% import "partials/macros.html" as ui with context %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+{% set unread = notifications|selectattr("is_read", "equalto", 0)|list|length %}
+<div class="page-head">
+  <div><span class="eyebrow">Inbox</span><h1 class="mt-2">Notifications</h1><p>Status changes and reviewer remarks on your applications.</p></div>
+  {% if notifications %}<div class="actions"><button class="btn" type="button" id="markAll" {% if not unread %}disabled{% endif %}><i class="fas fa-check-double"></i>Mark all as read</button></div>{% endif %}
+</div>
+
+{% if notifications %}
+<section class="card">
+  <div class="card-header">
+    <div class="segmented" role="tablist" aria-label="Filter notifications">
+      <button type="button" class="is-active" data-tab="all">All <span class="subtle">({{ notifications|length }})</span></button>
+      <button type="button" data-tab="unread">Unread <span class="subtle" id="unreadCount">({{ unread }})</span></button>
+    </div>
+    <select class="select select-sm" style="max-width:220px" id="toneFilter" aria-label="Filter by outcome">
+      <option value="all">All outcomes</option>
+      <option value="success">Approved</option>
+      <option value="info">For Dean review</option>
+      <option value="warning">Pending</option>
+      <option value="danger">Rejected</option>
+    </select>
+  </div>
+  <div id="notifList">
+    {% for n in notifications %}
+    {% set tone = n.app_status|status_tone if n.app_status else 'grey' %}
+    <article class="notif {% if not n.is_read %}unread{% endif %}" data-row data-id="{{ n.id }}" data-tone="{{ tone }}" data-read="{{ 1 if n.is_read else 0 }}">
+      <span class="list-icon {{ tone }}"><i class="fas {% if tone == 'success' %}fa-circle-check{% elif tone == 'danger' %}fa-circle-xmark{% elif tone == 'info' %}fa-user-tie{% else %}fa-bell{% endif %}"></i></span>
+      <div class="notif-body">
+        <div class="notif-meta">{% if n.app_status %}{{ ui.status_badge(n.app_status) }}{% endif %}<span><i class="far fa-clock"></i> {{ n.created_at|datefmt('%b %d, %Y · %I:%M %p') }}</span><span>{{ n.created_at|timeago }}</span></div>
+        <p>{{ n.message }}</p>
+      </div>
+      {% if not n.is_read %}<button class="btn btn-ghost btn-sm mark-one" type="button" title="Mark as read" aria-label="Mark as read"><i class="fas fa-check"></i></button>{% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  <div data-filter-empty="notifList" hidden>{{ ui.empty_state("Nothing here", "No notifications match this filter.", icon="fa-filter") }}</div>
+</section>
+{% else %}
+<div class="card">{{ ui.empty_state("No notifications yet", "We'll let you know here as soon as your application is reviewed.") }}</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const list = document.getElementById("notifList");
+  if (!list) return;
+  const markAll = document.getElementById("markAll");
+  const unreadCount = document.getElementById("unreadCount");
+  let tab = "all";
+
+  const refresh = () => {
+    const remaining = list.querySelectorAll('[data-read="0"]').length;
+    unreadCount.textContent = `(${remaining})`;
+    Fox.setBadge("notifBadge", remaining);
+    if (markAll) markAll.disabled = remaining === 0;
+    document.querySelectorAll(".icon-btn .dot").forEach((d) => (d.hidden = remaining === 0));
+  };
+  const markRead = (row) => {
+    row.classList.remove("unread");
+    row.dataset.read = "1";
+    const btn = row.querySelector(".mark-one");
+    if (btn) btn.remove();
+    if (tab === "unread") row.hidden = true;
+  };
+  list.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".mark-one");
+    if (!btn) return;
+    const row = btn.closest(".notif");
+    Fox.setLoading(btn, true);
+    try {
+      await Fox.api("{{ url_for('student.mark_notifications_read') }}", { method: "POST", json: { id: row.dataset.id } });
+      markRead(row);
+      refresh();
+    } catch (err) {
+      Fox.setLoading(btn, false);
+      Fox.toast(err.message, "danger");
+    }
+  });
+  if (markAll) markAll.addEventListener("click", async () => {
+    Fox.setLoading(markAll, true);
+    try {
+      await Fox.api("{{ url_for('student.mark_notifications_read') }}", { method: "POST", json: {} });
+      list.querySelectorAll(".notif").forEach(markRead);
+      Fox.toast("All notifications marked as read.", "success");
+    } catch (err) {
+      Fox.toast(err.message, "danger");
+    } finally {
+      Fox.setLoading(markAll, false);
+      refresh();
+    }
+  });
+  document.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => {
+    tab = b.dataset.tab;
+    document.querySelectorAll("[data-tab]").forEach((x) => x.classList.toggle("is-active", x === b));
+    const tone = document.querySelector('[id="toneFilter"]').value;
+    let shown = 0;
+    list.querySelectorAll(".notif").forEach((row) => {
+      const ok = (tab === "all" || row.dataset.read === "0") && (tone === "all" || row.dataset.tone === tone);
+      row.hidden = !ok;
+      if (ok) shown++;
+    });
+    document.querySelector('[data-filter-empty="notifList"]').hidden = shown !== 0;
+  }));
+  document.querySelector('[id="toneFilter"]').addEventListener("change", () => document.querySelector(`[data-tab="${tab}"]`).click());
+})();
+</script>
+{% endblock %}
