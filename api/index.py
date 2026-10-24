@@ -44,5 +44,15 @@ class VercelPathFix:
 
         return self.wsgi_app(environ, start_response)
 
+from flask import request
+
+@app.before_request
+def log_vercel_routing():
+    app.logger.info(
+        f"VERCEL ROUTE: path={request.path} | script_root={request.script_root} | "
+        f"environ_path={request.environ.get('PATH_INFO')} | environ_script={request.environ.get('SCRIPT_NAME')} | "
+        f"query={request.environ.get('QUERY_STRING')}"
+    )
+
 # Wrap Flask's internal wsgi_app so `app` remains an authentic Flask instance
 app.wsgi_app = VercelPathFix(app.wsgi_app)
